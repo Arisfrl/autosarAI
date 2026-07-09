@@ -108,3 +108,23 @@
 {"timestamp": "2026-07-09T22:53:52.172543+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
 {"timestamp": "2026-07-09T22:54:11.733071+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 998, "use_mapping_precheck": true}}
 {"timestamp": "2026-07-09T22:54:17.576457+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "run_safety_check", "details": {"issue_count": 1, "score": 92, "summary": "Validation passed with warnings", "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T22:56:15.310757+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 145, "mode": "ollama", "model": "qwen2.5-coder:7b"}}
+{"timestamp": "2026-07-09T22:57:11.566900+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1117, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T22:57:27.665448+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1117, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T22:57:35.695637+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1117, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T22:57:36.610903+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1117, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T22:57:37.432124+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1117, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T22:59:09.981391+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T23:09:41.235250+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T23:10:02.645032+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "reload_model", "details": {"model": "llama3.1:latest", "provider": "ollama"}}
+{"timestamp": "2026-07-09T23:12:46.259042+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 145, "mode": "ollama", "model": "llama3.1:latest"}}
+{"timestamp": "2026-07-09T23:13:28.070150+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1447, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T23:16:34.235614+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T23:23:48.581480+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T23:25:15.435328+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T23:25:21.687340+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "reload_model", "details": {"model": "llama3.1:latest", "provider": "ollama"}}
+{"timestamp": "2026-07-09T23:27:36.756461+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 145, "mode": "ollama", "model": "llama3.1:latest"}}
+{"timestamp": "2026-07-09T23:27:53.105299+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1356, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T23:27:56.518606+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "run_safety_check", "details": {"issue_count": 4, "score": 68, "summary": "Validation passed with warnings", "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T23:29:20.892067+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T23:29:24.598276+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}

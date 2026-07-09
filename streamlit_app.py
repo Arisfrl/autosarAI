@@ -13,6 +13,7 @@ import urllib.parse
 import base64
 import hmac
 import os
+import html
 from pathlib import Path
 from urllib.parse import quote
 import json
@@ -770,9 +771,9 @@ components.html(
 st.markdown(hero_html, unsafe_allow_html=True)
 
 if "model_name" not in st.session_state:
-    st.session_state.model_name = "gemini-2.5-flash"
+    st.session_state.model_name = "llama3.1"
 if "model_provider" not in st.session_state:
-    st.session_state.model_provider = "gemini"
+    st.session_state.model_provider = "ollama"
 if "gemini_api_key" not in st.session_state:
     st.session_state.gemini_api_key = ""
 if (
@@ -1251,7 +1252,7 @@ st.sidebar.caption(
     f"total={summary.get('total', 0)}"
 )
 
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([3, 2])
 with col1:
     st.subheader("1. Natural language request")
     st.caption(
@@ -1419,12 +1420,19 @@ with col1:
                     rationale = str(item.get("rationale", "")).strip()
                     suggestion_text = rationale or title
                     confidence = float(item.get("confidence", 0) or 0)
+                    confidence = max(0.0, min(1.0, confidence))
+                    category = str(item.get("category", "")).upper()
+
+                    bar_count = int(round(confidence * 10))
+                    confidence_bar = "[" + ("#" * bar_count) + ("-" * (10 - bar_count)) + "]"
+
                     table_rows.append(
                         {
                             "ID": suggestion_id,
-                            "Category": str(item.get("category", "")).upper(),
+                            "Category": category,
                             "Suggestion": suggestion_text,
-                            "Confidence": f"{confidence:.4f}",
+                            "Confidence": confidence,
+                            "ConfidenceBar": confidence_bar,
                             "Source": "AI",
                         }
                     )
@@ -1434,17 +1442,113 @@ with col1:
                         "patch_instruction": str(item.get("patch_instruction", "")).strip(),
                     }
 
-                st.dataframe(table_rows, use_container_width=True, hide_index=True)
+                table_rows.sort(key=lambda row: float(row.get("Confidence", 0.0)), reverse=True)
 
-                with st.expander("Suggestion details"):
-                    for row in table_rows:
-                        sid = row["ID"]
-                        details = detail_lookup.get(sid, {})
-                        st.markdown(f"**{sid} - {details.get('title', '')}**")
-                        if details.get("rationale"):
-                            st.write(f"Rationale: {details['rationale']}")
-                        if details.get("patch_instruction"):
-                            st.write(f"Patch: {details['patch_instruction']}")
+                avg_confidence = 0.0
+                if table_rows:
+                    avg_confidence = sum(float(item.get("Confidence", 0) or 0) for item in table_rows) / len(table_rows)
+                selected_count = len(st.session_state.selected_suggestion_ids or [])
+
+                st.markdown(
+                    """
+                    <style>
+                    .shuttle-panel {
+                        margin-top: 8px;
+                        border-radius: 16px;
+                        border: 1px solid #28598f;
+                        padding: 14px;
+                        background:
+                            radial-gradient(90% 120% at 0% 0%, rgba(82, 143, 214, 0.24) 0%, rgba(82, 143, 214, 0.05) 58%, rgba(82, 143, 214, 0) 100%),
+                            linear-gradient(145deg, #0d213b 0%, #122c4d 45%, #0f2942 100%);
+                        box-shadow: 0 10px 28px rgba(8, 22, 39, 0.45);
+                    }
+                    .shuttle-title {
+                        color: #e7f3ff;
+                        font-weight: 780;
+                        letter-spacing: 0.25px;
+                        margin-bottom: 10px;
+                        font-size: 0.98rem;
+                    }
+                    .shuttle-meta {
+                        display: flex;
+                        gap: 8px;
+                        flex-wrap: wrap;
+                        margin-bottom: 10px;
+                    }
+                    .shuttle-chip {
+                        color: #d9ebff;
+                        border: 1px solid #4a7fb9;
+                        background: rgba(106, 168, 235, 0.17);
+                        border-radius: 999px;
+                        font-size: 0.75rem;
+                        padding: 2px 9px;
+                        font-weight: 640;
+                    }
+                    .shuttle-row {
+                        margin-top: 10px;
+                        padding: 8px 10px;
+                        border-radius: 10px;
+                        border: 1px solid rgba(133, 183, 240, 0.28);
+                        background: rgba(9, 24, 42, 0.52);
+                    }
+                    .shuttle-row-id {
+                        color: #d8e8fb;
+                        font-size: 0.79rem;
+                        font-weight: 700;
+                        margin-bottom: 3px;
+                    }
+                    .shuttle-row-text {
+                        color: #f0f6ff;
+                        font-size: 0.9rem;
+                        line-height: 1.32;
+                    }
+                    .shuttle-track {
+                        width: 100%;
+                        height: 7px;
+                        border-radius: 999px;
+                        background: #274569;
+                        overflow: hidden;
+                        margin-top: 7px;
+                    }
+                    .shuttle-fill {
+                        height: 100%;
+                        background: linear-gradient(90deg, #67a5f8 0%, #56d2be 100%);
+                    }
+                    .shuttle-score {
+                        color: #b9d5f8;
+                        font-size: 0.76rem;
+                        margin-top: 4px;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                panel = [
+                    '<div class="shuttle-panel">',
+                    '<div class="shuttle-title">Suggestion Shuttle Lane</div>',
+                    '<div class="shuttle-meta">',
+                    f'<span class="shuttle-chip">Total: {len(table_rows)}</span>',
+                    f'<span class="shuttle-chip">Selected: {selected_count}</span>',
+                    f'<span class="shuttle-chip">Avg confidence: {avg_confidence:.2f}</span>',
+                    '</div>',
+                ]
+
+                for row in table_rows:
+                    confidence = max(0.0, min(1.0, float(row.get("Confidence", 0) or 0)))
+                    panel.append(
+                        '<div class="shuttle-row">'
+                        f'<div class="shuttle-row-id">{html.escape(str(row.get("ID", "")))}</div>'
+                        f'<div class="shuttle-row-text">{html.escape(detail_lookup.get(str(row.get("ID", "")), {}).get("title", ""))}</div>'
+                        '<div class="shuttle-track">'
+                        f'<div class="shuttle-fill" style="width:{int(round(confidence * 100))}%;"></div>'
+                        '</div>'
+                        f'<div class="shuttle-score">confidence {confidence:.2f}</div>'
+                        '</div>'
+                    )
+
+                panel.append('</div>')
+                st.markdown("".join(panel), unsafe_allow_html=True)
 
                 if st.button("Apply selected suggestions"):
                     if not st.session_state.selected_suggestion_ids:
