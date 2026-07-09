@@ -103,7 +103,7 @@ st.markdown(
 st.title("AI-Augmented AUTOSAR MDE Website")
 st.write("Generate simplified AUTOSAR YAML from natural language, upload ARXML references, and compile to ARXML outputs.")
 
-engine = AutosarHackathonEngine()
+engine = AutosarHackathonEngine(load_pdfs=False)
 
 if "user_request" not in st.session_state:
     st.session_state.user_request = (
@@ -127,7 +127,7 @@ with st.sidebar:
     st.markdown("Upload AUTOSAR ARXML reference files and run local Ollama generation.")
     model_name = st.text_input("Ollama model", engine.model_name)
     if st.button("Reload model"):
-        engine = AutosarHackathonEngine(model_name=model_name)
+        engine = AutosarHackathonEngine(model_name=model_name, load_pdfs=False)
     if st.button("Load TempSensor demo prompt"):
         st.session_state.user_request = "Create a Software Component named TempSensor with a sender port CurrentTemp of type float32."
     if st.button("Load CAN→SOME/IP demo prompt"):

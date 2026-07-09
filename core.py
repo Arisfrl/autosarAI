@@ -1,5 +1,6 @@
 import re
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -93,22 +94,42 @@ def _parse_autosar_arxml_text(xml_text: str, source_name: str = "Uploaded ARXML"
         return f"Failed to parse AUTOSAR XML content from {source_name}."
 
 
-def _extract_text_from_pdf(pdf_path: Path) -> str:
-    """Extract text from a PDF file."""
+def _extract_text_from_pdf(pdf_path: Path, timeout_seconds: float = 5.0) -> str:
+    """Extract text from a PDF file while avoiding startup hangs on problematic files."""
+    script = f"""
+import sys
+from pathlib import Path
+from pypdf import PdfReader
+pdf_path = Path(sys.argv[1])
+try:
+    reader = PdfReader(pdf_path)
+    text_chunks = [f"# AUTOSAR Document: {{pdf_path.name}}"]
+    for page_num, page in enumerate(reader.pages, start=1):
+        text = page.extract_text()
+        if text:
+            text_chunks.append(f"## Page {{page_num}}")
+            text_chunks.append(text)
+    sys.stdout.write("\\n\\n".join(text_chunks))
+except Exception as e:
+    sys.stderr.write(str(e))
+    sys.exit(1)
+"""
     try:
-        reader = PdfReader(pdf_path)
-        text_chunks = [f"# AUTOSAR Document: {pdf_path.name}"]
-        for page_num, page in enumerate(reader.pages, start=1):
-            text = page.extract_text()
-            if text:
-                text_chunks.append(f"## Page {page_num}")
-                text_chunks.append(text)
-        return "\n\n".join(text_chunks)
-    except Exception as e:
-        return f"Failed to extract text from PDF {pdf_path.name}: {e}"
+        result = subprocess.run(
+            [sys.executable, "-c", script, str(pdf_path)],
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+        error_message = result.stderr.strip() or "no text extracted"
+        return f"Failed to extract text from PDF {pdf_path.name}: {error_message}"
+    except subprocess.TimeoutExpired:
+        return f"Failed to extract text from PDF {pdf_path.name}: timed out after {timeout_seconds} seconds"
 
 
-def _load_reference_documents() -> List[Dict[str, str]]:
+def _load_reference_documents(load_pdfs: bool = False) -> List[Dict[str, str]]:
     docs = []
     reference_dir = BASE_DIR / "data"
     reference_dir.mkdir(exist_ok=True)
@@ -120,15 +141,15 @@ def _load_reference_documents() -> List[Dict[str, str]]:
         for arxml_path in sorted(autosar_dir.rglob("*.arxml")):
             docs.append({"name": arxml_path.name, "text": _parse_autosar_arxml(arxml_path)})
 
-    # Load AUTOSAR specification PDFs
-    pdf_dir = BASE_DIR / "autosar_docs"
-    if pdf_dir.exists():
-        for pdf_subdir in ["adaptive", "classic"]:
-            pdf_subdir_path = pdf_dir / pdf_subdir
-            if pdf_subdir_path.exists():
-                for pdf_path in sorted(pdf_subdir_path.glob("*.pdf")):
-                    pdf_text = _extract_text_from_pdf(pdf_path)
-                    docs.append({"name": pdf_path.name, "text": pdf_text})
+    if load_pdfs:
+        pdf_dir = BASE_DIR / "autosar_docs"
+        if pdf_dir.exists():
+            for pdf_subdir in ["adaptive", "classic"]:
+                pdf_subdir_path = pdf_dir / pdf_subdir
+                if pdf_subdir_path.exists():
+                    for pdf_path in sorted(pdf_subdir_path.glob("*.pdf")):
+                        pdf_text = _extract_text_from_pdf(pdf_path)
+                        docs.append({"name": pdf_path.name, "text": pdf_text})
 
     return docs
 
@@ -145,9 +166,9 @@ def _simple_retrieve(query: str, docs: List[Dict[str, str]], top_k: int = 2) -> 
 
 
 class AutosarHackathonEngine:
-    def __init__(self, model_name: str = "llama3.1", top_k: int = 3):
+    def __init__(self, model_name: str = "llama3.1", top_k: int = 3, load_pdfs: bool = False):
         self.model_name = model_name
-        self.docs = _load_reference_documents()
+        self.docs = _load_reference_documents(load_pdfs=load_pdfs)
         self.template_env = Environment(
             loader=FileSystemLoader(BASE_DIR / "templates"),
             autoescape=select_autoescape(enabled_extensions=("xml",)),
