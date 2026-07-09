@@ -304,6 +304,35 @@ if not st.session_state.auth.get("is_authenticated"):
     st.stop()
 
 auth_ctx = st.session_state.auth
+
+tenant_label = (auth_ctx.get("tenant") or "").strip().upper()
+if tenant_label:
+    st.markdown(
+        f"""
+        <style>
+        .tenant-watermark {{
+            position: fixed;
+            top: 12px;
+            left: 14px;
+            z-index: 9999;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(31, 94, 169, 0.35);
+            background: rgba(255, 255, 255, 0.86);
+            color: #0f2942;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 3px 12px rgba(14, 53, 92, 0.12);
+        }}
+        </style>
+        <div class="tenant-watermark">{tenant_label}</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 st.caption(
     f"Signed in as {auth_ctx['display_name']} ({auth_ctx['role']}) | tenant: {auth_ctx['tenant']}"
 )
@@ -513,35 +542,6 @@ with col1:
     if st.session_state.yaml_data:
         st.subheader("Generated YAML")
         st.code(st.session_state.yaml_data, language="yaml")
-        baseline_profiles = engine.get_demo_baseline_profiles()
-        default_profile = auth_ctx["tenant"] if auth_ctx["tenant"] in baseline_profiles else "default"
-        selected_profile = st.selectbox(
-            "Dummy baseline profile",
-            baseline_profiles,
-            index=baseline_profiles.index(default_profile) if default_profile in baseline_profiles else 0,
-            help="Choose a profile to auto-fill missing service and signal sections.",
-        )
-        if st.button("Apply demo baseline data (CAN/SOME-IP + ECU defaults)"):
-            try:
-                st.session_state.yaml_data = engine.apply_demo_baseline_yaml(
-                    st.session_state.yaml_data,
-                    profile=selected_profile,
-                )
-                st.success(
-                    f"Demo baseline profile '{selected_profile}' applied. "
-                    "Missing CAN/SOME-IP and ECU defaults were auto-filled."
-                )
-                _audit_log(
-                    auth_ctx["tenant"],
-                    auth_ctx["username"],
-                    auth_ctx["role"],
-                    "apply_demo_baseline",
-                    {"profile": selected_profile},
-                )
-                st.rerun()
-            except Exception as exc:
-                st.error(f"Could not apply demo baseline data: {exc}")
-        st.caption("Tip: Use demo baseline data to auto-fill missing SOME/IP, CAN, ASIL, and hardware bindings for jury demos.")
         st.download_button("Download YAML", st.session_state.yaml_data, file_name="autosar_architecture.yaml", mime="text/yaml")
         if show_raw_prompt and st.session_state.last_prompt:
             st.subheader("Raw Ollama prompt")
@@ -568,18 +568,8 @@ if st.button("Compile ARXML"):
         st.warning("Generate YAML first.")
     else:
         with st.spinner("Compiling YAML to ARXML..."):
-            try:
-                st.session_state.arxml_output = engine.compile_to_arxml(st.session_state.yaml_data)
-                _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "compile_arxml", {"yaml_len": len(st.session_state.yaml_data or "")})
-            except ValueError as exc:
-                st.session_state.arxml_output = ""
-                st.error(f"ARXML compile failed: {exc}")
-                st.info("Tip: Regenerate YAML or adjust the prompt to request strict valid YAML only.")
-                _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "compile_arxml_failed", {"error": str(exc)})
-            except Exception as exc:
-                st.session_state.arxml_output = ""
-                st.error(f"ARXML compile failed unexpectedly: {exc}")
-                _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "compile_arxml_failed", {"error": str(exc)})
+            st.session_state.arxml_output = engine.compile_to_arxml(st.session_state.yaml_data)
+            _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "compile_arxml", {"yaml_len": len(st.session_state.yaml_data or "")})
 
 if st.session_state.arxml_output:
     st.code(st.session_state.arxml_output, language="xml")
@@ -590,49 +580,14 @@ if st.button("Run safety check"):
     if not st.session_state.yaml_data:
         st.warning("Generate YAML first.")
     else:
-        report = engine.safety_check_report(st.session_state.yaml_data)
-        counts = report.get("counts", {})
-        critical_count = int(counts.get("critical", 0))
-        warning_count = int(counts.get("warning", 0))
-        info_count = int(counts.get("info", 0))
-        score = int(report.get("score", 0))
-
-        _audit_log(
-            auth_ctx["tenant"],
-            auth_ctx["username"],
-            auth_ctx["role"],
-            "run_safety_check",
-            {
-                "critical": critical_count,
-                "warning": warning_count,
-                "info": info_count,
-                "score": score,
-            },
-        )
-
-        st.metric("Safety readiness score", f"{score}/100")
-        st.caption(str(report.get("summary", "Validation completed")))
-
-        findings = report.get("findings", [])
-        critical_items = [f for f in findings if f.get("severity") == "critical"]
-        warning_items = [f for f in findings if f.get("severity") == "warning"]
-        info_items = [f for f in findings if f.get("severity") == "info"]
-
-        if critical_items:
-            st.error("Critical findings")
-            for item in critical_items:
-                st.write(f"- {item.get('message', '')}")
-
-        if warning_items:
-            st.warning("Warnings")
-            for item in warning_items:
-                st.write(f"- {item.get('message', '')}")
-            st.info("Each warning line includes what is missing and what to add next.")
-
-        if info_items:
-            st.success("Checks passed")
-            for item in info_items:
-                st.write(f"- {item.get('message', '')}")
+        issues = engine.safety_check(st.session_state.yaml_data)
+        _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "run_safety_check", {"issue_count": len(issues)})
+        if issues:
+            st.error("Safety issues found")
+            for issue in issues:
+                st.write(f"- {issue}")
+        else:
+            st.success("No high-level safety issues detected.")
 
 st.markdown("---")
 st.markdown("#### Notes\n- Upload ARXML files on the sidebar to use them as reference material.\n- Generated ARXML is a simplified demonstration output.\n- The app uses local Ollama via the `ollama` CLI.")
