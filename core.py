@@ -9,6 +9,7 @@ from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from pypdf import PdfReader
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -92,6 +93,21 @@ def _parse_autosar_arxml_text(xml_text: str, source_name: str = "Uploaded ARXML"
         return f"Failed to parse AUTOSAR XML content from {source_name}."
 
 
+def _extract_text_from_pdf(pdf_path: Path) -> str:
+    """Extract text from a PDF file."""
+    try:
+        reader = PdfReader(pdf_path)
+        text_chunks = [f"# AUTOSAR Document: {pdf_path.name}"]
+        for page_num, page in enumerate(reader.pages, start=1):
+            text = page.extract_text()
+            if text:
+                text_chunks.append(f"## Page {page_num}")
+                text_chunks.append(text)
+        return "\n\n".join(text_chunks)
+    except Exception as e:
+        return f"Failed to extract text from PDF {pdf_path.name}: {e}"
+
+
 def _load_reference_documents() -> List[Dict[str, str]]:
     docs = []
     reference_dir = BASE_DIR / "data"
@@ -103,6 +119,16 @@ def _load_reference_documents() -> List[Dict[str, str]]:
     if autosar_dir.exists():
         for arxml_path in sorted(autosar_dir.rglob("*.arxml")):
             docs.append({"name": arxml_path.name, "text": _parse_autosar_arxml(arxml_path)})
+
+    # Load AUTOSAR specification PDFs
+    pdf_dir = BASE_DIR / "autosar_docs"
+    if pdf_dir.exists():
+        for pdf_subdir in ["adaptive", "classic"]:
+            pdf_subdir_path = pdf_dir / pdf_subdir
+            if pdf_subdir_path.exists():
+                for pdf_path in sorted(pdf_subdir_path.glob("*.pdf")):
+                    pdf_text = _extract_text_from_pdf(pdf_path)
+                    docs.append({"name": pdf_path.name, "text": pdf_text})
 
     return docs
 

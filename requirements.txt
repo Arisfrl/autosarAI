@@ -5,3 +5,4 @@ streamlit
 jinja2
 pyyaml
 sentence-transformers
+pypdf
