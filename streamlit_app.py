@@ -1395,6 +1395,7 @@ with col1:
 
             suggestions = st.session_state.ai_suggestions
             if suggestions:
+                st.caption("Review AI-generated suggestions, select the ones to apply, then update YAML.")
                 suggestion_options = [
                     f"{item.get('id', '')}: {item.get('title', '')} [{item.get('category', '')}]"
                     for item in suggestions
@@ -1410,14 +1411,40 @@ with col1:
                 )
                 st.session_state.selected_suggestion_ids = [id_lookup[label] for label in selected_labels if id_lookup.get(label)]
 
+                table_rows = []
+                detail_lookup = {}
                 for item in suggestions:
-                    st.markdown(
-                        f"- **{item.get('id', '')}** | {item.get('title', '')} | "
-                        f"category={item.get('category', '')} | confidence={item.get('confidence', 0)}"
+                    suggestion_id = str(item.get("id", ""))
+                    title = str(item.get("title", "")).strip()
+                    rationale = str(item.get("rationale", "")).strip()
+                    suggestion_text = rationale or title
+                    confidence = float(item.get("confidence", 0) or 0)
+                    table_rows.append(
+                        {
+                            "ID": suggestion_id,
+                            "Category": str(item.get("category", "")).upper(),
+                            "Suggestion": suggestion_text,
+                            "Confidence": f"{confidence:.4f}",
+                            "Source": "AI",
+                        }
                     )
-                    st.caption(
-                        f"Rationale: {item.get('rationale', '')} | Patch: {item.get('patch_instruction', '')}"
-                    )
+                    detail_lookup[suggestion_id] = {
+                        "title": title,
+                        "rationale": rationale,
+                        "patch_instruction": str(item.get("patch_instruction", "")).strip(),
+                    }
+
+                st.dataframe(table_rows, use_container_width=True, hide_index=True)
+
+                with st.expander("Suggestion details"):
+                    for row in table_rows:
+                        sid = row["ID"]
+                        details = detail_lookup.get(sid, {})
+                        st.markdown(f"**{sid} - {details.get('title', '')}**")
+                        if details.get("rationale"):
+                            st.write(f"Rationale: {details['rationale']}")
+                        if details.get("patch_instruction"):
+                            st.write(f"Patch: {details['patch_instruction']}")
 
                 if st.button("Apply selected suggestions"):
                     if not st.session_state.selected_suggestion_ids:
