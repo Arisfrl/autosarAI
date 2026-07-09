@@ -1,0 +1,13 @@
+{"timestamp": "2026-07-09T11:43:55.432144+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T11:47:20.210709+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T11:47:43.173290+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml_fallback", "details": {"error": "Ollama executable was not found. Install Ollama and ensure `ollama` is available on PATH.", "prompt_len": 92}}
+{"timestamp": "2026-07-09T11:48:22.213020+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 419}}
+{"timestamp": "2026-07-09T11:48:37.135844+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "run_safety_check", "details": {"issue_count": 0}}
+{"timestamp": "2026-07-09T11:58:38.882931+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T12:01:29.781990+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml_fallback", "details": {"error": "Ollama executable was not found. Install Ollama and ensure `ollama` is available on PATH.", "prompt_len": 92}}
+{"timestamp": "2026-07-09T12:02:07.545901+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T12:02:20.862498+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T12:05:08.669981+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama"}}
+{"timestamp": "2026-07-09T12:13:03.699244+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T12:13:49.049435+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama"}}
+{"timestamp": "2026-07-09T12:14:00.337454+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 257}}

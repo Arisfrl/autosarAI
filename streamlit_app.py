@@ -8,6 +8,10 @@
 import threading
 from pathlib import Path
 from urllib.parse import quote
+import json
+import hashlib
+import binascii
+from datetime import datetime, timezone
 
 import streamlit as st
 
@@ -17,6 +21,43 @@ from core import AutosarHackathonEngine, _parse_autosar_arxml_text
 st.set_page_config(page_title="AUTOSAR AI MDE", layout="wide")
 
 BASE_DIR = Path(__file__).resolve().parent
+AUTH_FILE = BASE_DIR / "config" / "auth_users.json"
+AUDIT_DIR = BASE_DIR / "audit"
+
+
+def _load_auth_users():
+    if not AUTH_FILE.exists():
+        return {}
+    data = json.loads(AUTH_FILE.read_text(encoding="utf-8"))
+    users = {}
+    for u in data.get("users", []):
+        users[u.get("username", "")] = u
+    return users
+
+
+def _verify_password(password: str, user_record: dict) -> bool:
+    try:
+        salt = bytes.fromhex(user_record["salt"])
+        iterations = int(user_record.get("iterations", 120000))
+        digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+        return binascii.hexlify(digest).decode("utf-8") == user_record["password_hash"]
+    except Exception:
+        return False
+
+
+def _audit_log(tenant: str, username: str, role: str, action: str, details: dict | None = None):
+    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "tenant": tenant,
+        "username": username,
+        "role": role,
+        "action": action,
+        "details": details or {},
+    }
+    logfile = AUDIT_DIR / f"{tenant}_audit.jsonl"
+    with logfile.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
 def _warmup_vector_store(engine: AutosarHackathonEngine) -> None:
@@ -223,6 +264,50 @@ hero_html = (
 
 st.markdown(hero_html, unsafe_allow_html=True)
 
+auth_users = _load_auth_users()
+if "auth" not in st.session_state:
+    st.session_state.auth = {
+        "is_authenticated": False,
+        "username": "",
+        "display_name": "",
+        "tenant": "",
+        "role": "",
+    }
+
+if not st.session_state.auth.get("is_authenticated"):
+    st.subheader("Company Login")
+    with st.form("login_form", clear_on_submit=False):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Sign in")
+    if submitted:
+        rec = auth_users.get(username)
+        if rec and _verify_password(password, rec):
+            st.session_state.auth = {
+                "is_authenticated": True,
+                "username": username,
+                "display_name": rec.get("display_name", username),
+                "tenant": rec.get("tenant", "public"),
+                "role": rec.get("role", "viewer"),
+            }
+            _audit_log(
+                rec.get("tenant", "public"),
+                username,
+                rec.get("role", "viewer"),
+                "login_success",
+                {},
+            )
+            st.rerun()
+        else:
+            st.error("Invalid credentials")
+            _audit_log("unknown", username or "unknown", "unknown", "login_failed", {})
+    st.stop()
+
+auth_ctx = st.session_state.auth
+st.caption(
+    f"Signed in as {auth_ctx['display_name']} ({auth_ctx['role']}) | tenant: {auth_ctx['tenant']}"
+)
+
 if "model_name" not in st.session_state:
     st.session_state.model_name = "llama3.1"
 if (
@@ -232,6 +317,7 @@ if (
     st.session_state.engine = AutosarHackathonEngine(
         model_name=st.session_state.model_name,
         load_pdfs=False,
+        tenant_id=auth_ctx["tenant"],
     )
 engine = st.session_state.engine
 
@@ -292,7 +378,9 @@ with st.sidebar:
         st.session_state.engine = AutosarHackathonEngine(
             model_name=st.session_state.model_name,
             load_pdfs=False,
+            tenant_id=auth_ctx["tenant"],
         )
+        _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "reload_model", {"model": st.session_state.model_name})
         engine = st.session_state.engine
         st.session_state.vector_warmup_started = False
         st.session_state.vector_warmup_done = False
@@ -364,7 +452,9 @@ if st.sidebar.button("Reset uploaded references"):
     st.session_state.engine = AutosarHackathonEngine(
         model_name=st.session_state.model_name,
         load_pdfs=False,
+        tenant_id=auth_ctx["tenant"],
     )
+    _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "reset_uploaded_references", {})
     st.session_state.vector_warmup_started = False
     st.session_state.vector_warmup_done = False
     st.session_state.vector_warmup_error = ""
@@ -389,6 +479,7 @@ with col1:
     st.subheader("2. Generate simplified AUTOSAR YAML")
     use_vector = st.checkbox("Use Chroma vector retrieval", value=True)
     show_raw_prompt = st.checkbox("Show raw Ollama prompt", value=False)
+    allow_fallback = st.checkbox("Allow fallback if Ollama is unavailable", value=True)
     if st.button("Generate YAML"):
         with st.spinner("Running local Ollama inference..."):
             reference_docs = st.session_state.uploaded_docs if st.session_state.uploaded_docs else None
@@ -401,9 +492,20 @@ with col1:
                 )
             else:
                 st.session_state.reference_ingest_status = ""
-            yaml_data = engine.generate_simplified_structure(user_request, use_vector_retrieval=use_vector)
-            st.session_state.yaml_data = yaml_data
-            st.session_state.last_prompt = engine.get_last_prompt()
+            try:
+                yaml_data = engine.generate_simplified_structure(user_request, use_vector_retrieval=use_vector)
+                st.session_state.yaml_data = yaml_data
+                st.session_state.last_prompt = engine.get_last_prompt()
+                _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "generate_yaml", {"use_vector": use_vector, "prompt_len": len(user_request or ""), "mode": "ollama"})
+            except Exception as exc:
+                if allow_fallback:
+                    st.warning(f"Ollama generation failed ({exc}). Using deterministic fallback YAML.")
+                    st.session_state.yaml_data = engine.generate_simplified_structure_fallback(user_request)
+                    st.session_state.last_prompt = ""
+                    _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "generate_yaml_fallback", {"error": str(exc), "prompt_len": len(user_request or "")})
+                else:
+                    st.error(f"YAML generation failed: {exc}")
+                    _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "generate_yaml_failed", {"error": str(exc), "prompt_len": len(user_request or "")})
 
     if st.session_state.reference_ingest_status:
         st.caption(st.session_state.reference_ingest_status)
@@ -438,6 +540,7 @@ if st.button("Compile ARXML"):
     else:
         with st.spinner("Compiling YAML to ARXML..."):
             st.session_state.arxml_output = engine.compile_to_arxml(st.session_state.yaml_data)
+            _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "compile_arxml", {"yaml_len": len(st.session_state.yaml_data or "")})
 
 if st.session_state.arxml_output:
     st.code(st.session_state.arxml_output, language="xml")
@@ -449,6 +552,7 @@ if st.button("Run safety check"):
         st.warning("Generate YAML first.")
     else:
         issues = engine.safety_check(st.session_state.yaml_data)
+        _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "run_safety_check", {"issue_count": len(issues)})
         if issues:
             st.error("Safety issues found")
             for issue in issues:
