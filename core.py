@@ -1,8 +1,12 @@
 import re
+import shutil
 import subprocess
 import sys
 import hashlib
 import threading
+import json
+import urllib.error
+import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -181,9 +185,11 @@ def _simple_retrieve(query: str, docs: List[Dict[str, str]], top_k: int = 2) -> 
 
 
 class AutosarHackathonEngine:
-    def __init__(self, model_name: str = "llama3.1", top_k: int = 3, load_pdfs: bool = False):
+    def __init__(self, model_name: str = "llama3.1", top_k: int = 3, load_pdfs: bool = False, tenant_id: str = "public"):
         self.model_name = model_name
         self.docs = _load_reference_documents(load_pdfs=load_pdfs)
+        tenant_id = (tenant_id or "public").strip().lower()
+        self.tenant_id = re.sub(r"[^a-z0-9_-]+", "_", tenant_id) or "public"
         self.template_env = Environment(
             loader=FileSystemLoader(BASE_DIR / "templates"),
             autoescape=select_autoescape(enabled_extensions=("xml",)),
@@ -204,14 +210,14 @@ class AutosarHackathonEngine:
         return hashlib.sha1(AutosarHackathonEngine._doc_key(doc).encode("utf-8")).hexdigest()
 
     def _build_vector_store(self, docs: List[Dict[str, str]]):
-        persist_dir = BASE_DIR / "chroma_db"
+        persist_dir = BASE_DIR / "chroma_db" / self.tenant_id
         persist_dir.mkdir(exist_ok=True)
         client = chromadb.Client(
             settings=Settings(persist_directory=str(persist_dir), is_persistent=True)
         )
         embedding_function = _get_embedding_function()
         collection = client.get_or_create_collection(
-            name="autosar_docs",
+            name=f"autosar_docs_{self.tenant_id}",
             embedding_function=embedding_function,
         )
 
@@ -310,17 +316,94 @@ class AutosarHackathonEngine:
         return "\n\n".join(prompt)
 
     def _call_ollama(self, prompt: str) -> str:
-        result = subprocess.run(
-            ["ollama", "run", self.model_name, prompt],
-            capture_output=True,
-            text=True,
-            timeout=180,
-        )
+        api_payload = json.dumps(
+            {
+                "model": self.model_name,
+                "prompt": prompt,
+                "stream": False,
+            }
+        ).encode("utf-8")
+
+        try:
+            request = urllib.request.Request(
+                "http://127.0.0.1:11434/api/generate",
+                data=api_payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=180) as response:
+                payload = json.loads(response.read().decode("utf-8", errors="replace"))
+            text_response = (payload.get("response") or "").strip()
+            if not text_response:
+                raise RuntimeError("Ollama returned an empty response.")
+            return text_response
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+            # Fall back to CLI if the local Ollama API is not reachable.
+            pass
+
+        ollama_executable = shutil.which("ollama")
+        if not ollama_executable and sys.platform.startswith("win"):
+            candidate = Path.home() / "AppData" / "Local" / "Programs" / "Ollama" / "ollama.exe"
+            if candidate.exists():
+                ollama_executable = str(candidate)
+
+        if not ollama_executable:
+            raise RuntimeError(
+                "Ollama executable was not found. Install Ollama and ensure ollama is available on PATH."
+            )
+
+        try:
+            result = subprocess.run(
+                [ollama_executable, "run", self.model_name, prompt],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=180,
+            )
+        except FileNotFoundError as exc:
+            raise RuntimeError(
+                "Ollama executable was not found. Install Ollama and ensure ollama is available on PATH."
+            ) from exc
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == 206:
+                raise RuntimeError(
+                    "Ollama inference command exceeded Windows command length limits."
+                ) from exc
+            raise
         if result.returncode != 0:
             raise RuntimeError(
                 f"Ollama inference failed: {result.stderr.strip() or result.stdout.strip()}"
             )
         return result.stdout.strip()
+
+    def generate_simplified_structure_fallback(self, user_request: str) -> str:
+        """
+        Deterministic local fallback so the UI remains usable without Ollama.
+        """
+        name_match = re.search(r"component\s+named\s+([A-Za-z0-9_]+)", user_request, re.IGNORECASE)
+        component_name = name_match.group(1) if name_match else "GatewayComponent"
+        return f"""system:
+  name: SDV_Gateway
+  mode: demo_fallback
+ecus:
+  - name: ECU_CLASSIC
+    asil: B
+    processor: MCU_A
+  - name: ECU_ADAPTIVE
+    asil: C
+    processor: SoC_B
+services:
+  - name: SOMEIP_{component_name}
+    protocol: SOME/IP
+signals:
+  - source: CAN
+    destination: SOME/IP
+    transform: normalize_and_route
+safety:
+  - check: fallback_generation_used
+  - note: Ollama unavailable, generated deterministic scaffold
+"""
 
     def generate_simplified_structure(self, user_request: str, use_vector_retrieval: bool = True) -> str:
         retrieved_docs = self._retrieve_documents(user_request, use_vector_retrieval)

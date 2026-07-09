@@ -13,6 +13,8 @@ Features
 - Safety checklist rules for ISO 26262 / ASIL compliance
 - Demo prompt builder for CAN-to-SOME/IP conversion
 - Streamlit UI for interactive exploration
+- Authentication-first tenant model for multi-company usage (BMW/Ford demo users)
+- Tenant-scoped vector stores and audit logging
 
 ## Setup
 1. Install Ollama and pull the model:
@@ -29,6 +31,23 @@ pip install -r requirements.txt
 ```bash
 streamlit run streamlit_app.py
 ```
+
+## Authentication and Tenant Isolation
+
+The app now starts with a login gate before any AUTOSAR data is accessible.
+
+Demo users (defined in `config/auth_users.json`):
+
+- `bmw_admin` / `Bmw@12345` (tenant: `bmw`)
+- `ford_admin` / `Ford@12345` (tenant: `ford`)
+
+Tenant isolation implemented:
+
+- Chroma persistence path is tenant scoped: `chroma_db/<tenant>/`
+- Chroma collection name is tenant scoped: `autosar_docs_<tenant>`
+- Audit logs are written per tenant in `audit/<tenant>_audit.jsonl`
+
+This is a starter implementation for hackathon realism and can be replaced by OAuth2/OIDC later.
 
 ## Chroma Retrieval
 The project now includes a local Chroma vector store for retrieval-augmented generation. The first app run creates a small embedding database from `data/autosar_reference.md`.

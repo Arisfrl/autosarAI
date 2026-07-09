@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "username": "bmw_admin",
+      "display_name": "BMW Admin",
+      "tenant": "bmw",
+      "role": "admin",
+      "iterations": 120000,
+      "salt": "971a8a3869d17b1a5cb8778b76843cf9",
+      "password_hash": "e51d5f900250b285c9934a7e46c4b9e02d51fa69e8a1ec133795ea2296c59173"
+    },
+    {
+      "username": "ford_admin",
+      "display_name": "Ford Admin",
+      "tenant": "ford",
+      "role": "admin",
+      "iterations": 120000,
+      "salt": "93dd938077b16b4729c70437e2e1633b",
+      "password_hash": "3967923fb78eb217dc512835a4fd723bc0af63e5326bdd44602442eb9993b5ab"
+    }
+  ]
+}
