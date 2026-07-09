@@ -19,6 +19,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pypdf import PdfReader
 
 BASE_DIR = Path(__file__).resolve().parent
+DEMO_BASELINE_PATH = BASE_DIR / "data" / "demo_validation_baseline.json"
 _EMBEDDING_FUNCTION = None
 _EMBEDDING_FUNCTION_LOCK = threading.Lock()
 
@@ -200,6 +201,84 @@ class AutosarHackathonEngine:
         self.vector_warmup_error: Optional[str] = None
         self.last_retrieved: List[str] = []
         self.last_prompt: str = ""
+        self.demo_baseline = self._load_demo_validation_baseline()
+
+    def _load_demo_validation_baseline(self) -> Dict[str, object]:
+        fallback_profile = {
+            "default_asil": "B",
+            "default_processor": "Generic_MCU",
+            "services": [
+                {
+                    "name": "TelemetrySomeIpService",
+                    "protocol": "SOME/IP",
+                    "description": "Demo baseline SOME/IP service for Adaptive communication",
+                }
+            ],
+            "signals": [
+                {
+                    "name": "CabinTemp_CAN",
+                    "source": "CAN",
+                    "destination": "SOME/IP",
+                    "transform": "linear_scale",
+                }
+            ],
+            "safety": [
+                {"check": "watchdog_supervision", "note": "Demo baseline safety monitor enabled"}
+            ],
+        }
+        fallback = {
+            "baseline_profiles": {
+                "default": fallback_profile,
+            }
+        }
+
+        if not DEMO_BASELINE_PATH.exists():
+            return fallback
+
+        try:
+            loaded = json.loads(DEMO_BASELINE_PATH.read_text(encoding="utf-8"))
+            if not isinstance(loaded, dict):
+                return fallback
+            merged = dict(fallback)
+            merged.update(loaded)
+
+            # Backward compatibility: if profile map is absent, treat root-level
+            # fields as the default profile.
+            if "baseline_profiles" not in merged:
+                merged["baseline_profiles"] = {
+                    "default": {
+                        "default_asil": merged.get("default_asil", fallback_profile["default_asil"]),
+                        "default_processor": merged.get("default_processor", fallback_profile["default_processor"]),
+                        "services": merged.get("services", fallback_profile["services"]),
+                        "signals": merged.get("signals", fallback_profile["signals"]),
+                        "safety": merged.get("safety", fallback_profile["safety"]),
+                    }
+                }
+            return merged
+        except Exception:
+            return fallback
+
+    def get_demo_baseline_profiles(self) -> List[str]:
+        profiles = self.demo_baseline.get("baseline_profiles", {}) if isinstance(self.demo_baseline, dict) else {}
+        if not isinstance(profiles, dict) or not profiles:
+            return ["default"]
+        return sorted(profiles.keys())
+
+    def _resolve_demo_profile(self, profile: str) -> Dict[str, object]:
+        profiles = self.demo_baseline.get("baseline_profiles", {}) if isinstance(self.demo_baseline, dict) else {}
+        if not isinstance(profiles, dict) or not profiles:
+            return {}
+
+        requested = (profile or "default").strip().lower()
+        if requested in profiles and isinstance(profiles[requested], dict):
+            return profiles[requested]
+        if "default" in profiles and isinstance(profiles["default"], dict):
+            return profiles["default"]
+
+        for value in profiles.values():
+            if isinstance(value, dict):
+                return value
+        return {}
 
     @staticmethod
     def _doc_key(doc: Dict[str, str]) -> str:
@@ -409,15 +488,89 @@ safety:
         retrieved_docs = self._retrieve_documents(user_request, use_vector_retrieval)
         prompt = self._build_prompt(user_request, retrieved_docs)
         self.last_prompt = prompt
-        return self._call_ollama(prompt)
+        return self._extract_yaml_payload(self._call_ollama(prompt))
 
     def get_last_prompt(self) -> str:
         return self.last_prompt
 
-    def compile_to_arxml(self, yaml_text: str) -> str:
-        data = yaml.safe_load(yaml_text)
-        if not isinstance(data, dict):
+    def _extract_yaml_payload(self, text: str) -> str:
+        payload = (text or "").replace("\r\n", "\n").strip()
+        fenced_match = re.search(r"```(?:yaml|yml)?\s*(.*?)```", payload, flags=re.IGNORECASE | re.DOTALL)
+        if fenced_match:
+            payload = fenced_match.group(1).strip()
+
+        root_key_match = re.search(r"(?m)^(system|ecus|services|signals|safety)\s*:", payload)
+        if root_key_match:
+            payload = payload[root_key_match.start():].strip()
+
+        return payload
+
+    def _parse_yaml_spec(self, yaml_text: str) -> Dict[str, object]:
+        payload = self._extract_yaml_payload(yaml_text)
+        try:
+            parsed = yaml.safe_load(payload)
+        except yaml.YAMLError as exc:
+            mark = getattr(exc, "problem_mark", None)
+            if mark is not None:
+                line = mark.line + 1
+                col = mark.column + 1
+                raise ValueError(f"Invalid YAML near line {line}, column {col}.") from exc
+            raise ValueError("Invalid YAML syntax.") from exc
+
+        if not isinstance(parsed, dict):
             raise ValueError("Parsed YAML must be a dictionary.")
+
+        return parsed
+
+    def apply_demo_baseline_yaml(self, yaml_text: str, profile: str = "default") -> str:
+        spec = self._parse_yaml_spec(yaml_text)
+        baseline = self._resolve_demo_profile(profile)
+
+        spec.setdefault("system", {})
+        spec.setdefault("ecus", [])
+        spec.setdefault("services", [])
+        spec.setdefault("signals", [])
+        spec.setdefault("safety", [])
+
+        ecus = spec["ecus"] if isinstance(spec.get("ecus"), list) else []
+        default_asil = str(baseline.get("default_asil", "B"))
+        default_processor = str(baseline.get("default_processor", "Generic_MCU"))
+        for ecu in ecus:
+            if isinstance(ecu, dict):
+                if not str(ecu.get("asil", "")).strip():
+                    ecu["asil"] = default_asil
+                if not self._has_hardware_binding(ecu):
+                    ecu["processor"] = default_processor
+
+        services = spec["services"] if isinstance(spec.get("services"), list) else []
+        signals = spec["signals"] if isinstance(spec.get("signals"), list) else []
+
+        has_someip = any("some/ip" in str(item).lower() for item in services)
+        has_can = any("can" in str(item).lower() for item in signals)
+
+        if not has_someip:
+            baseline_services = baseline.get("services", [])
+            if isinstance(baseline_services, list):
+                services.extend([item for item in baseline_services if isinstance(item, dict)])
+
+        if not has_can:
+            baseline_signals = baseline.get("signals", [])
+            if isinstance(baseline_signals, list):
+                signals.extend([item for item in baseline_signals if isinstance(item, dict)])
+
+        if not spec.get("safety"):
+            baseline_safety = baseline.get("safety", [])
+            if isinstance(baseline_safety, list):
+                spec["safety"] = [item for item in baseline_safety if isinstance(item, dict)]
+
+        spec["ecus"] = ecus
+        spec["services"] = services
+        spec["signals"] = signals
+
+        return yaml.safe_dump(spec, sort_keys=False, allow_unicode=True)
+
+    def compile_to_arxml(self, yaml_text: str) -> str:
+        data = self._parse_yaml_spec(yaml_text)
 
         data.setdefault("system", {})
         data.setdefault("ecus", [])
@@ -428,45 +581,168 @@ safety:
         template = self.template_env.get_template("arxml_template.xml.j2")
         return template.render(spec=data)
 
-    def safety_check(self, yaml_text: str) -> List[str]:
-        issues = []
+    def _append_finding(self, report: Dict[str, object], severity: str, message: str):
+        findings = report.get("findings", [])
+        findings.append({"severity": severity, "message": message})
+        report["findings"] = findings
+
+    def _collect_names(self, items: List[dict], keys: List[str]) -> List[str]:
+        names = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            for key in keys:
+                value = str(item.get(key, "")).strip()
+                if value:
+                    names.append(value)
+                    break
+        return names
+
+    def _has_hardware_binding(self, ecu: dict) -> bool:
+        if not isinstance(ecu, dict):
+            return False
+        alias_keys = ["processor", "hardware", "platform", "cpu", "soc", "node"]
+        return any(str(ecu.get(key, "")).strip() for key in alias_keys)
+
+    def safety_check_report(self, yaml_text: str) -> Dict[str, object]:
+        report: Dict[str, object] = {
+            "score": 100,
+            "summary": "Safety checks passed",
+            "findings": [],
+            "counts": {"critical": 0, "warning": 0, "info": 0},
+        }
+
+        def add_finding(severity: str, message: str):
+            self._append_finding(report, severity, message)
+
         try:
             spec = yaml.safe_load(yaml_text) or {}
         except yaml.YAMLError as exc:
-            return [f"YAML parse error: {exc}"]
+            add_finding("critical", f"YAML parse error: {exc}")
+            report["summary"] = "Validation failed"
+            report["score"] = 0
+            report["counts"] = {"critical": 1, "warning": 0, "info": 0}
+            return report
 
         if not isinstance(spec, dict):
-            return ["Generated YAML is not a top-level mapping."]
+            add_finding("critical", "Generated YAML is not a top-level mapping.")
+            report["summary"] = "Validation failed"
+            report["score"] = 0
+            report["counts"] = {"critical": 1, "warning": 0, "info": 0}
+            return report
 
         system = spec.get("system", {})
-        if not system.get("name"):
-            issues.append("System name is missing in the YAML.")
+        ecus = spec.get("ecus", []) if isinstance(spec.get("ecus", []), list) else []
+        services = spec.get("services", []) if isinstance(spec.get("services", []), list) else []
+        signals = spec.get("signals", []) if isinstance(spec.get("signals", []), list) else []
+        safety_items = spec.get("safety", [])
 
-        ecus = spec.get("ecus", [])
-        if not isinstance(ecus, list) or len(ecus) == 0:
-            issues.append("No ECU definitions were found.")
+        if isinstance(system, dict) and str(system.get("name", "")).strip():
+            add_finding("info", "System name is present: OK for traceability.")
         else:
-            for index, ecu in enumerate(ecus, start=1):
-                if not ecu.get("asil"):
-                    issues.append(f"ECU #{index} is missing an ASIL assignment.")
-                if not ecu.get("processor"):
-                    issues.append(f"ECU #{index} has no processor or hardware binding.")
+            add_finding("critical", "System name is missing; add a unique system.name so the architecture can be traced.")
 
-        services = spec.get("services", [])
-        signals = spec.get("signals", [])
+        if not ecus:
+            add_finding("critical", "No ECU definitions found; add at least one ECU for deployment and safety allocation.")
+        else:
+            add_finding("info", f"Found {len(ecus)} ECU definition(s).")
+
+        valid_asil_values = {"qm", "a", "b", "c", "d", "asil-a", "asil-b", "asil-c", "asil-d"}
+        missing_asil = 0
+        missing_hw = 0
+        invalid_asil = 0
+        for index, ecu in enumerate(ecus, start=1):
+            if not isinstance(ecu, dict):
+                add_finding("warning", f"ECU #{index} is not a mapping object.")
+                continue
+            asil = str(ecu.get("asil", "")).strip().lower()
+            if not asil:
+                missing_asil += 1
+            elif asil not in valid_asil_values:
+                invalid_asil += 1
+            if not self._has_hardware_binding(ecu):
+                missing_hw += 1
+
+        if missing_asil:
+            add_finding("warning", f"{missing_asil} ECU(s) are missing ASIL; add qm/A/B/C/D so risk level is explicit.")
+        else:
+            add_finding("info", "All ECUs include ASIL assignments.")
+
+        if invalid_asil:
+            add_finding("warning", f"{invalid_asil} ECU(s) use non-standard ASIL values; use qm or A/B/C/D format.")
+
+        if missing_hw:
+            add_finding("warning", f"{missing_hw} ECU(s) have no hardware binding; add processor/platform so runtime target is clear.")
+        else:
+            add_finding("info", "All ECUs include hardware binding details.")
+
         if not services:
-            issues.append("No service descriptions were generated.")
+            add_finding("critical", "No service descriptions generated; add services so Adaptive communication can be validated.")
+        else:
+            add_finding("info", f"Found {len(services)} service definition(s).")
+
         if not signals:
-            issues.append("No signal mappings were generated.")
+            add_finding("critical", "No signal mappings generated; add signals so Classic-to-Adaptive flow is testable.")
+        else:
+            add_finding("info", f"Found {len(signals)} signal mapping(s).")
 
-        if not any("some/ip" in str(item).lower() for item in services):
-            issues.append("No SOME/IP service protocol was identified in the generated services.")
-        if not any("can" in str(item).lower() for item in signals):
-            issues.append("No CAN signal was identified in the generated signal mapping.")
+        someip_detected = any("some/ip" in str(item).lower() for item in services)
+        can_detected = any("can" in str(item).lower() for item in signals)
+        if someip_detected:
+            add_finding("info", "SOME/IP protocol detected in services: OK for Adaptive interface demo.")
+        else:
+            add_finding("warning", "No SOME/IP protocol detected in services; add protocol: SOME/IP or apply demo baseline.")
+        if can_detected:
+            add_finding("info", "CAN signal mapping detected: OK for Classic source path.")
+        else:
+            add_finding("warning", "No CAN signal mapping detected; add source: CAN signal entry or apply demo baseline.")
 
-        if re.search(r"\bmissing\b|\bundefined\b|\bunsupported\b", yaml_text.lower()):
-            issues.append("YAML contains terms that may indicate incomplete or undefined design details.")
-        if re.search(r"\bdeadlock\b|\bloop\b|\bdata loss\b|\bviolation\b", yaml_text.lower()):
-            issues.append("Potential safety hazard terms were detected; validate the design before deployment.")
+        service_names = self._collect_names(services, ["name", "service", "short_name"])
+        signal_names = self._collect_names(signals, ["name", "signal", "short_name"])
+        duplicate_services = len(service_names) - len(set(service_names))
+        duplicate_signals = len(signal_names) - len(set(signal_names))
+        if duplicate_services > 0:
+            add_finding("warning", f"Detected {duplicate_services} duplicate service name(s); rename duplicates to avoid routing ambiguity.")
+        if duplicate_signals > 0:
+            add_finding("warning", f"Detected {duplicate_signals} duplicate signal name(s); rename duplicates for deterministic mapping.")
 
-        return issues
+        if not safety_items:
+            add_finding("warning", "No safety checklist entries found; add safety checks (watchdog/monitor/fallback) for review readiness.")
+        else:
+            add_finding("info", f"Found {len(safety_items)} safety checklist item(s).")
+
+        yaml_lower = yaml_text.lower()
+        if re.search(r"\bmissing\b|\bundefined\b|\bunsupported\b", yaml_lower):
+            add_finding("warning", "Design text contains unresolved terms (missing/undefined/unsupported).")
+        if re.search(r"\bdeadlock\b|\bdata loss\b|\bsafety violation\b", yaml_lower):
+            add_finding("warning", "Potential safety hazard keywords were detected; review required.")
+
+        findings = report.get("findings", [])
+        critical_count = sum(1 for item in findings if item.get("severity") == "critical")
+        warning_count = sum(1 for item in findings if item.get("severity") == "warning")
+        info_count = sum(1 for item in findings if item.get("severity") == "info")
+        report["counts"] = {
+            "critical": critical_count,
+            "warning": warning_count,
+            "info": info_count,
+        }
+
+        score = 100 - (critical_count * 30) - (warning_count * 8)
+        report["score"] = max(0, score)
+        if critical_count > 0:
+            report["summary"] = "Validation failed: critical findings present"
+        elif warning_count > 0:
+            report["summary"] = "Validation passed with warnings"
+        else:
+            report["summary"] = "Validation passed"
+
+        return report
+
+    def safety_check(self, yaml_text: str) -> List[str]:
+        report = self.safety_check_report(yaml_text)
+        findings = report.get("findings", [])
+        return [
+            f"[{item.get('severity', 'info').upper()}] {item.get('message', '')}"
+            for item in findings
+            if item.get("severity") in {"critical", "warning"}
+        ]

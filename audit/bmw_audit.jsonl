@@ -11,3 +11,30 @@
 {"timestamp": "2026-07-09T12:13:03.699244+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
 {"timestamp": "2026-07-09T12:13:49.049435+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama"}}
 {"timestamp": "2026-07-09T12:14:00.337454+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 257}}
+{"timestamp": "2026-07-09T12:29:25.376213+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T12:31:17.940193+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama"}}
+{"timestamp": "2026-07-09T12:31:30.684457+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 847}}
+{"timestamp": "2026-07-09T12:31:42.554284+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "run_safety_check", "details": {"issue_count": 8}}
+{"timestamp": "2026-07-09T12:35:24.313008+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T12:36:47.130468+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama"}}
+{"timestamp": "2026-07-09T12:38:56.470000+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T12:40:15.856888+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama"}}
+{"timestamp": "2026-07-09T13:04:41.175179+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 692}}
+{"timestamp": "2026-07-09T13:04:44.647557+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "run_safety_check", "details": {"critical": 1, "warning": 4, "info": 4, "score": 38}}
+{"timestamp": "2026-07-09T13:09:12.515914+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T13:09:22.398825+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml_fallback", "details": {"error": "'RustBindingsAPI' object has no attribute 'bindings'", "prompt_len": 92}}
+{"timestamp": "2026-07-09T13:09:33.811112+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 419}}
+{"timestamp": "2026-07-09T13:09:40.566394+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "run_safety_check", "details": {"critical": 0, "warning": 0, "info": 9, "score": 100}}
+{"timestamp": "2026-07-09T13:12:12.998687+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama"}}
+{"timestamp": "2026-07-09T13:12:55.762275+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 665}}
+{"timestamp": "2026-07-09T13:13:00.793926+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "run_safety_check", "details": {"critical": 3, "warning": 2, "info": 4, "score": 0}}
+{"timestamp": "2026-07-09T13:22:07.057336+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T13:23:32.878571+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama"}}
+{"timestamp": "2026-07-09T13:23:45.720568+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 644}}
+{"timestamp": "2026-07-09T13:23:51.714241+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "apply_demo_baseline", "details": {"profile": "bmw"}}
+{"timestamp": "2026-07-09T13:23:59.473037+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1461}}
+{"timestamp": "2026-07-09T13:24:46.653073+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "run_safety_check", "details": {"critical": 0, "warning": 0, "info": 9, "score": 100}}
+{"timestamp": "2026-07-09T13:31:03.191820+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml_fallback", "details": {"error": "Ollama executable was not found. Install Ollama and ensure ollama is available on PATH.", "prompt_len": 135}}
+{"timestamp": "2026-07-09T13:33:23.755051+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 135, "mode": "ollama"}}
+{"timestamp": "2026-07-09T13:34:03.465405+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1550}}
+{"timestamp": "2026-07-09T13:34:09.181960+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "run_safety_check", "details": {"critical": 0, "warning": 4, "info": 5, "score": 68}}
