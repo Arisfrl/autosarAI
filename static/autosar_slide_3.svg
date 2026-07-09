@@ -1,0 +1,65 @@
+<svg width="1400" height="420" viewBox="0 0 1400 420" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eef8ff"/>
+      <stop offset="100%" stop-color="#dcecff"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="420" fill="url(#bg3)"/>
+
+  <g opacity="0.25" stroke="#9ec3ea" stroke-width="2">
+    <circle cx="220" cy="210" r="190" fill="none"/>
+    <circle cx="220" cy="210" r="150" fill="none"/>
+    <circle cx="220" cy="210" r="110" fill="none"/>
+    <circle cx="220" cy="210" r="70" fill="none"/>
+  </g>
+
+  <g transform="translate(120 110)" stroke="#5e96d8" fill="none" stroke-width="3">
+    <path d="M38 112 L82 58 L203 58 L244 103 L232 148 L52 148 Z" fill="#edf6ff"/>
+    <circle cx="86" cy="148" r="15" fill="#ffffff"/>
+    <circle cx="203" cy="148" r="15" fill="#ffffff"/>
+    <path d="M106 58 Q118 33 165 33 Q192 33 196 58"/>
+  </g>
+
+  <g stroke="#4f8fdd" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M382 178 C520 178, 560 92, 714 92"/>
+    <path d="M382 220 C525 220, 560 210, 714 210"/>
+    <path d="M382 262 C520 262, 560 328, 714 328"/>
+  </g>
+
+  <g fill="#2f79d8">
+    <circle cx="382" cy="178" r="8"/>
+    <circle cx="382" cy="220" r="8"/>
+    <circle cx="382" cy="262" r="8"/>
+    <circle cx="714" cy="92" r="8"/>
+    <circle cx="714" cy="210" r="8"/>
+    <circle cx="714" cy="328" r="8"/>
+  </g>
+
+  <g transform="translate(740 52)">
+    <rect x="0" y="0" width="260" height="82" rx="16" fill="#ffffff" stroke="#96c0ea"/>
+    <rect x="0" y="118" width="260" height="82" rx="16" fill="#ffffff" stroke="#96c0ea"/>
+    <rect x="0" y="236" width="260" height="82" rx="16" fill="#ffffff" stroke="#96c0ea"/>
+    <circle cx="36" cy="42" r="12" fill="#76abe8"/>
+    <circle cx="36" cy="160" r="12" fill="#76abe8"/>
+    <circle cx="36" cy="278" r="12" fill="#76abe8"/>
+    <rect x="60" y="34" width="160" height="16" rx="8" fill="#d7eaff"/>
+    <rect x="60" y="152" width="140" height="16" rx="8" fill="#d7eaff"/>
+    <rect x="60" y="270" width="170" height="16" rx="8" fill="#d7eaff"/>
+  </g>
+
+  <g transform="translate(1040 72)">
+    <polygon points="110,0 220,64 220,194 110,258 0,194 0,64" fill="#edf6ff" stroke="#8db7e4" stroke-width="3"/>
+    <circle cx="110" cy="129" r="64" fill="none" stroke="#6ea4e0" stroke-width="3"/>
+    <circle cx="110" cy="129" r="8" fill="#2d78d8"/>
+    <circle cx="71" cy="102" r="8" fill="#2d78d8"/>
+    <circle cx="149" cy="102" r="8" fill="#2d78d8"/>
+    <circle cx="71" cy="156" r="8" fill="#2d78d8"/>
+    <circle cx="149" cy="156" r="8" fill="#2d78d8"/>
+    <line x1="110" y1="129" x2="71" y2="102" stroke="#6ea4e0" stroke-width="3"/>
+    <line x1="110" y1="129" x2="149" y2="102" stroke="#6ea4e0" stroke-width="3"/>
+    <line x1="110" y1="129" x2="71" y2="156" stroke="#6ea4e0" stroke-width="3"/>
+    <line x1="110" y1="129" x2="149" y2="156" stroke="#6ea4e0" stroke-width="3"/>
+  </g>
+</svg>

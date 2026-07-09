@@ -1,6 +1,8 @@
 import re
 import subprocess
 import sys
+import hashlib
+import threading
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -13,6 +15,19 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pypdf import PdfReader
 
 BASE_DIR = Path(__file__).resolve().parent
+_EMBEDDING_FUNCTION = None
+_EMBEDDING_FUNCTION_LOCK = threading.Lock()
+
+
+def _get_embedding_function():
+    global _EMBEDDING_FUNCTION
+    if _EMBEDDING_FUNCTION is None:
+        with _EMBEDDING_FUNCTION_LOCK:
+            if _EMBEDDING_FUNCTION is None:
+                _EMBEDDING_FUNCTION = embedding_functions.SentenceTransformerEmbeddingFunction(
+                    model_name="all-MiniLM-L6-v2"
+                )
+    return _EMBEDDING_FUNCTION
 
 
 def _parse_autosar_arxml_root(root: ET.Element, source_name: str = "ARXML") -> str:
@@ -174,9 +189,19 @@ class AutosarHackathonEngine:
             autoescape=select_autoescape(enabled_extensions=("xml",)),
         )
         self.top_k = top_k
-        self.vector_store = self._build_vector_store(self.docs)
+        self.vector_store = None
+        self._vector_store_lock = threading.Lock()
+        self.vector_warmup_error: Optional[str] = None
         self.last_retrieved: List[str] = []
         self.last_prompt: str = ""
+
+    @staticmethod
+    def _doc_key(doc: Dict[str, str]) -> str:
+        return f"{doc['name']}::{doc['text']}"
+
+    @staticmethod
+    def _doc_id(doc: Dict[str, str]) -> str:
+        return hashlib.sha1(AutosarHackathonEngine._doc_key(doc).encode("utf-8")).hexdigest()
 
     def _build_vector_store(self, docs: List[Dict[str, str]]):
         persist_dir = BASE_DIR / "chroma_db"
@@ -184,25 +209,62 @@ class AutosarHackathonEngine:
         client = chromadb.Client(
             settings=Settings(persist_directory=str(persist_dir), is_persistent=True)
         )
-        embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name="all-MiniLM-L6-v2"
-        )
+        embedding_function = _get_embedding_function()
         collection = client.get_or_create_collection(
             name="autosar_docs",
             embedding_function=embedding_function,
         )
 
-        if collection.count() == 0:
-            collection.add(
-                ids=[doc["name"] for doc in docs],
+        if collection.count() == 0 and docs:
+            collection.upsert(
+                ids=[self._doc_id(doc) for doc in docs],
                 metadatas=[{"source": doc["name"]} for doc in docs],
                 documents=[doc["text"] for doc in docs],
             )
         return collection
 
+    def _ensure_vector_store(self):
+        if self.vector_store is None:
+            with self._vector_store_lock:
+                if self.vector_store is None:
+                    self.vector_store = self._build_vector_store(self.docs)
+        return self.vector_store
+
+    def warm_up_vector_store(self) -> bool:
+        try:
+            self._ensure_vector_store()
+            self.vector_warmup_error = None
+            return True
+        except Exception as exc:
+            self.vector_warmup_error = str(exc)
+            return False
+
+    def is_vector_store_ready(self) -> bool:
+        return self.vector_store is not None
+
+    def add_reference_documents(self, docs: List[Dict[str, str]]) -> Dict[str, int]:
+        if not docs:
+            return {"added": 0, "already_present": 0}
+
+        existing_keys = {self._doc_key(doc) for doc in self.docs}
+        new_docs = [doc for doc in docs if self._doc_key(doc) not in existing_keys]
+        already_present = len(docs) - len(new_docs)
+        if not new_docs:
+            return {"added": 0, "already_present": already_present}
+
+        self.docs.extend(new_docs)
+        if self.vector_store is not None:
+            self.vector_store.upsert(
+                ids=[self._doc_id(doc) for doc in new_docs],
+                metadatas=[{"source": doc["name"]} for doc in new_docs],
+                documents=[doc["text"] for doc in new_docs],
+            )
+        return {"added": len(new_docs), "already_present": already_present}
+
     def _retrieve_documents(self, query: str, use_vector: bool = True) -> List[str]:
-        if use_vector and self.vector_store is not None:
-            result = self.vector_store.query(query_texts=[query], n_results=self.top_k)
+        if use_vector:
+            vector_store = self._ensure_vector_store()
+            result = vector_store.query(query_texts=[query], n_results=self.top_k)
             documents = result.get("documents", [[]])[0]
             self.last_retrieved = [doc for doc in documents if doc]
             return self.last_retrieved
