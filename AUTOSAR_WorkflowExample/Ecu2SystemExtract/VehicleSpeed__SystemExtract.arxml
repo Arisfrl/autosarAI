@@ -1,0 +1,1341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_00054.xsd">
+  <!-- AUTOSAR Workflow Example -->
+  <!--
+
+
+-WORK IN PROGRESS-
+
+Document Owner:                 AUTOSAR
+Document Responsibility:        AUTOSAR
+Document Identification Number: 1145
+Document Status:                Draft
+Part of AUTOSAR Standard:       Classic
+Part of AUTOSAR Release:        R25-11
+-->
+  <!--
+Disclaimer
+
+This work (specification and/or software implementation) and the material
+contained in it, as released by AUTOSAR, is for the purpose of information
+only. AUTOSAR and the companies that have contributed to it shall not be liable
+for any use of the work.
+
+The material contained in this work is protected by copyright and other types
+of intellectual property rights. The commercial exploitation of the material
+contained in this work requires a license to such intellectual property rights.
+
+This work may be utilized or reproduced without any modification, in any form
+or by any means, for informational purposes only. For any other purpose, no
+part of the work may be utilized or reproduced, in any form or by any means,
+without permission in writing from the publisher.
+
+The work has been developed for automotive applications only. It has neither
+been developed, nor tested for non-automotive applications.
+
+The word AUTOSAR and the AUTOSAR logo are registered trademarks.
+
+-->
+  <AR-PACKAGES>
+    <AR-PACKAGE>
+      <SHORT-NAME>AUTOSAR_AISpecification</SHORT-NAME>
+      <AR-PACKAGES>
+        <AR-PACKAGE>
+          <SHORT-NAME>ApplicationDataTypes</SHORT-NAME>
+          <CATEGORY>STANDARD</CATEGORY>
+          <ELEMENTS>
+            <APPLICATION-PRIMITIVE-DATA-TYPE>
+              <SHORT-NAME>OnOff1</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">On Off 1</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">Generic On/Off Information</L-2>
+              </DESC>
+              <CATEGORY>BOOLEAN</CATEGORY>
+              <SW-DATA-DEF-PROPS>
+                <SW-DATA-DEF-PROPS-VARIANTS>
+                  <SW-DATA-DEF-PROPS-CONDITIONAL>
+                    <SW-CALIBRATION-ACCESS>READ-ONLY</SW-CALIBRATION-ACCESS>
+                    <COMPU-METHOD-REF DEST="COMPU-METHOD">/AUTOSAR_AISpecification/CompuMethods/OnOff1</COMPU-METHOD-REF>
+                    <DATA-CONSTR-REF DEST="DATA-CONSTR">/AUTOSAR_AISpecification/DataConstrs/OnOff1</DATA-CONSTR-REF>
+                    <UNIT-REF DEST="UNIT">/AUTOSAR_AISpecification/Units/NoUnit</UNIT-REF>
+                  </SW-DATA-DEF-PROPS-CONDITIONAL>
+                </SW-DATA-DEF-PROPS-VARIANTS>
+              </SW-DATA-DEF-PROPS>
+            </APPLICATION-PRIMITIVE-DATA-TYPE>
+            <APPLICATION-PRIMITIVE-DATA-TYPE>
+              <SHORT-NAME>AgSpd2</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Angle Speed 2</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">Generic data type for angle speed</L-2>
+              </DESC>
+              <CATEGORY>VALUE</CATEGORY>
+              <SW-DATA-DEF-PROPS>
+                <SW-DATA-DEF-PROPS-VARIANTS>
+                  <SW-DATA-DEF-PROPS-CONDITIONAL>
+                    <SW-CALIBRATION-ACCESS>READ-ONLY</SW-CALIBRATION-ACCESS>
+                    <COMPU-METHOD-REF DEST="COMPU-METHOD">/AUTOSAR_AISpecification/CompuMethods/AgSpd2</COMPU-METHOD-REF>
+                    <DATA-CONSTR-REF DEST="DATA-CONSTR">/AUTOSAR_AISpecification/DataConstrs/AgSpd2</DATA-CONSTR-REF>
+                    <SW-INTENDED-RESOLUTION>0.0009765625</SW-INTENDED-RESOLUTION>
+                    <UNIT-REF DEST="UNIT">/AUTOSAR_AISpecification/Units/RadPerSec</UNIT-REF>
+                  </SW-DATA-DEF-PROPS-CONDITIONAL>
+                </SW-DATA-DEF-PROPS-VARIANTS>
+              </SW-DATA-DEF-PROPS>
+            </APPLICATION-PRIMITIVE-DATA-TYPE>
+            <APPLICATION-PRIMITIVE-DATA-TYPE>
+              <SHORT-NAME>Spd3</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Speed 3</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">Generic data type for speed</L-2>
+              </DESC>
+              <CATEGORY>VALUE</CATEGORY>
+              <SW-DATA-DEF-PROPS>
+                <SW-DATA-DEF-PROPS-VARIANTS>
+                  <SW-DATA-DEF-PROPS-CONDITIONAL>
+                    <SW-CALIBRATION-ACCESS>READ-ONLY</SW-CALIBRATION-ACCESS>
+                    <COMPU-METHOD-REF DEST="COMPU-METHOD">/AUTOSAR_AISpecification/CompuMethods/Spd3</COMPU-METHOD-REF>
+                    <DATA-CONSTR-REF DEST="DATA-CONSTR">/AUTOSAR_AISpecification/DataConstrs/Spd3</DATA-CONSTR-REF>
+                    <SW-INTENDED-RESOLUTION>0.25</SW-INTENDED-RESOLUTION>
+                    <UNIT-REF DEST="UNIT">/AUTOSAR_AISpecification/Units/MtrPerSec</UNIT-REF>
+                  </SW-DATA-DEF-PROPS-CONDITIONAL>
+                </SW-DATA-DEF-PROPS-VARIANTS>
+              </SW-DATA-DEF-PROPS>
+            </APPLICATION-PRIMITIVE-DATA-TYPE>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>CompuMethods</SHORT-NAME>
+          <CATEGORY>STANDARD</CATEGORY>
+          <ELEMENTS>
+            <COMPU-METHOD>
+              <SHORT-NAME>AgSpd2</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Angle Speed 2</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">Generic data type for angle speed</L-2>
+              </DESC>
+              <CATEGORY>LINEAR</CATEGORY>
+              <UNIT-REF DEST="UNIT">/AUTOSAR_AISpecification/Units/RadPerSec</UNIT-REF>
+              <COMPU-PHYS-TO-INTERNAL>
+                <COMPU-SCALES>
+                  <COMPU-SCALE>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">-5</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">5</UPPER-LIMIT>
+                    <COMPU-RATIONAL-COEFFS>
+                      <COMPU-NUMERATOR>
+                        <V>0</V>
+                        <V>1</V>
+                      </COMPU-NUMERATOR>
+                      <COMPU-DENOMINATOR>
+                        <V>0.0009765625</V>
+                      </COMPU-DENOMINATOR>
+                    </COMPU-RATIONAL-COEFFS>
+                  </COMPU-SCALE>
+                </COMPU-SCALES>
+              </COMPU-PHYS-TO-INTERNAL>
+            </COMPU-METHOD>
+            <COMPU-METHOD>
+              <SHORT-NAME>OnOff1</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">On Off 1</L-4>
+              </LONG-NAME>
+              <CATEGORY>TEXTTABLE</CATEGORY>
+              <UNIT-REF DEST="UNIT">/AUTOSAR_AISpecification/Units/NoUnit</UNIT-REF>
+              <COMPU-INTERNAL-TO-PHYS>
+                <COMPU-SCALES>
+                  <COMPU-SCALE>
+                    <DESC>
+                      <L-2 L="EN">0 = Off</L-2>
+                    </DESC>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">0</UPPER-LIMIT>
+                    <COMPU-CONST>
+                      <VT>Off</VT>
+                    </COMPU-CONST>
+                  </COMPU-SCALE>
+                  <COMPU-SCALE>
+                    <DESC>
+                      <L-2 L="EN">1 = On</L-2>
+                    </DESC>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">1</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">1</UPPER-LIMIT>
+                    <COMPU-CONST>
+                      <VT>On</VT>
+                    </COMPU-CONST>
+                  </COMPU-SCALE>
+                </COMPU-SCALES>
+              </COMPU-INTERNAL-TO-PHYS>
+            </COMPU-METHOD>
+            <COMPU-METHOD>
+              <SHORT-NAME>Spd3</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Speed 3</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">Generic data type for speed</L-2>
+              </DESC>
+              <CATEGORY>LINEAR</CATEGORY>
+              <UNIT-REF DEST="UNIT">/AUTOSAR_AISpecification/Units/MtrPerSec</UNIT-REF>
+              <COMPU-PHYS-TO-INTERNAL>
+                <COMPU-SCALES>
+                  <COMPU-SCALE>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">125</UPPER-LIMIT>
+                    <COMPU-RATIONAL-COEFFS>
+                      <COMPU-NUMERATOR>
+                        <V>0</V>
+                        <V>1</V>
+                      </COMPU-NUMERATOR>
+                      <COMPU-DENOMINATOR>
+                        <V>0.25</V>
+                      </COMPU-DENOMINATOR>
+                    </COMPU-RATIONAL-COEFFS>
+                  </COMPU-SCALE>
+                </COMPU-SCALES>
+              </COMPU-PHYS-TO-INTERNAL>
+            </COMPU-METHOD>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>DataConstrs</SHORT-NAME>
+          <CATEGORY>STANDARD</CATEGORY>
+          <ELEMENTS>
+            <DATA-CONSTR>
+              <SHORT-NAME>OnOff1</SHORT-NAME>
+              <DATA-CONSTR-RULES>
+                <DATA-CONSTR-RULE>
+                  <INTERNAL-CONSTRS>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">1</UPPER-LIMIT>
+                  </INTERNAL-CONSTRS>
+                </DATA-CONSTR-RULE>
+              </DATA-CONSTR-RULES>
+            </DATA-CONSTR>
+            <DATA-CONSTR>
+              <SHORT-NAME>AgSpd2</SHORT-NAME>
+              <DATA-CONSTR-RULES>
+                <DATA-CONSTR-RULE>
+                  <PHYS-CONSTRS>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">-5</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">5</UPPER-LIMIT>
+                    <UNIT-REF DEST="UNIT">/AUTOSAR_AISpecification/Units/RadPerSec</UNIT-REF>
+                  </PHYS-CONSTRS>
+                </DATA-CONSTR-RULE>
+              </DATA-CONSTR-RULES>
+            </DATA-CONSTR>
+            <DATA-CONSTR>
+              <SHORT-NAME>Spd3</SHORT-NAME>
+              <DATA-CONSTR-RULES>
+                <DATA-CONSTR-RULE>
+                  <PHYS-CONSTRS>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">125</UPPER-LIMIT>
+                    <UNIT-REF DEST="UNIT">/AUTOSAR_AISpecification/Units/MtrPerSec</UNIT-REF>
+                  </PHYS-CONSTRS>
+                </DATA-CONSTR-RULE>
+              </DATA-CONSTR-RULES>
+            </DATA-CONSTR>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>PhysicalDimensions</SHORT-NAME>
+          <CATEGORY>STANDARD</CATEGORY>
+          <ELEMENTS>
+            <PHYSICAL-DIMENSION>
+              <SHORT-NAME>TiNeg1_2</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Angular Speed</L-4>
+              </LONG-NAME>
+              <TIME-EXP>-1</TIME-EXP>
+            </PHYSICAL-DIMENSION>
+            <PHYSICAL-DIMENSION>
+              <SHORT-NAME>NoDimension</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Dimensionless</L-4>
+              </LONG-NAME>
+            </PHYSICAL-DIMENSION>
+            <PHYSICAL-DIMENSION>
+              <SHORT-NAME>Len1TiNeg1</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Velocity</L-4>
+              </LONG-NAME>
+              <LENGTH-EXP>1</LENGTH-EXP>
+              <TIME-EXP>-1</TIME-EXP>
+            </PHYSICAL-DIMENSION>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>PortInterfaces</SHORT-NAME>
+          <CATEGORY>STANDARD</CATEGORY>
+          <ELEMENTS>
+            <SENDER-RECEIVER-INTERFACE>
+              <SHORT-NAME>LedCmd1</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Led Command</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">Command to activate the Antitheft Warning System (ATWS) Light Emitting Diode (LED) on board</L-2>
+              </DESC>
+              <IS-SERVICE>false</IS-SERVICE>
+              <DATA-ELEMENTS>
+                <VARIABLE-DATA-PROTOTYPE>
+                  <SHORT-NAME>Cmd</SHORT-NAME>
+                  <DESC>
+                    <L-2 L="EN">OFF - LED not requested by alarm ON - LED requested by alarm</L-2>
+                  </DESC>
+                  <TYPE-TREF DEST="APPLICATION-PRIMITIVE-DATA-TYPE">/AUTOSAR_AISpecification/ApplicationDataTypes/OnOff1</TYPE-TREF>
+                </VARIABLE-DATA-PROTOTYPE>
+              </DATA-ELEMENTS>
+            </SENDER-RECEIVER-INTERFACE>
+            <SENDER-RECEIVER-INTERFACE>
+              <SHORT-NAME>RoadWhlAgSpd1</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Road Wheel Angle Speed 1</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">Generic interface for road wheel angle speed</L-2>
+              </DESC>
+              <IS-SERVICE>false</IS-SERVICE>
+              <DATA-ELEMENTS>
+                <VARIABLE-DATA-PROTOTYPE>
+                  <SHORT-NAME>RoadWhlAgSpd</SHORT-NAME>
+                  <TYPE-TREF DEST="APPLICATION-PRIMITIVE-DATA-TYPE">/AUTOSAR_AISpecification/ApplicationDataTypes/AgSpd2</TYPE-TREF>
+                </VARIABLE-DATA-PROTOTYPE>
+              </DATA-ELEMENTS>
+            </SENDER-RECEIVER-INTERFACE>
+            <SENDER-RECEIVER-INTERFACE>
+              <SHORT-NAME>VehSpd1</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Vehicle Speed 1</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">Generic interface for vehicle speed</L-2>
+              </DESC>
+              <IS-SERVICE>false</IS-SERVICE>
+              <DATA-ELEMENTS>
+                <VARIABLE-DATA-PROTOTYPE>
+                  <SHORT-NAME>VehSpd</SHORT-NAME>
+                  <TYPE-TREF DEST="APPLICATION-PRIMITIVE-DATA-TYPE">/AUTOSAR_AISpecification/ApplicationDataTypes/Spd3</TYPE-TREF>
+                </VARIABLE-DATA-PROTOTYPE>
+              </DATA-ELEMENTS>
+            </SENDER-RECEIVER-INTERFACE>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>Units</SHORT-NAME>
+          <CATEGORY>STANDARD</CATEGORY>
+          <ELEMENTS>
+            <UNIT>
+              <SHORT-NAME>RadPerSec</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Radian per Second</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">SI derived unit of angular velocity</L-2>
+              </DESC>
+              <DISPLAY-NAME>rad/s</DISPLAY-NAME>
+              <FACTOR-SI-TO-UNIT>1.0</FACTOR-SI-TO-UNIT>
+              <PHYSICAL-DIMENSION-REF DEST="PHYSICAL-DIMENSION">/AUTOSAR_AISpecification/PhysicalDimensions/TiNeg1_2</PHYSICAL-DIMENSION-REF>
+            </UNIT>
+            <UNIT>
+              <SHORT-NAME>NoUnit</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">No Unit</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">Unit for dimensionless continuous value data types like numbers, factors and coefficients</L-2>
+              </DESC>
+              <DISPLAY-NAME>-</DISPLAY-NAME>
+              <FACTOR-SI-TO-UNIT>1.0</FACTOR-SI-TO-UNIT>
+              <PHYSICAL-DIMENSION-REF DEST="PHYSICAL-DIMENSION">/AUTOSAR_AISpecification/PhysicalDimensions/NoDimension</PHYSICAL-DIMENSION-REF>
+            </UNIT>
+            <UNIT>
+              <SHORT-NAME>MtrPerSec</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Meter per Second</L-4>
+              </LONG-NAME>
+              <DESC>
+                <L-2 L="EN">SI derived unit of velocity</L-2>
+              </DESC>
+              <DISPLAY-NAME>m/s</DISPLAY-NAME>
+              <FACTOR-SI-TO-UNIT>1.0</FACTOR-SI-TO-UNIT>
+              <PHYSICAL-DIMENSION-REF DEST="PHYSICAL-DIMENSION">/AUTOSAR_AISpecification/PhysicalDimensions/Len1TiNeg1</PHYSICAL-DIMENSION-REF>
+            </UNIT>
+          </ELEMENTS>
+        </AR-PACKAGE>
+      </AR-PACKAGES>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>AUTOSAR_Platform</SHORT-NAME>
+      <CATEGORY>STANDARD</CATEGORY>
+      <AR-PACKAGES>
+        <AR-PACKAGE>
+          <SHORT-NAME>BaseTypes</SHORT-NAME>
+          <ELEMENTS>
+            <SW-BASE-TYPE>
+              <SHORT-NAME>sint16</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">signed integer 16bit</L-4>
+              </LONG-NAME>
+              <CATEGORY>FIXED_LENGTH</CATEGORY>
+              <INTRODUCTION>
+                <TRACE>
+                  <SHORT-NAME>SWS_Platform_00017</SHORT-NAME>
+                  <CATEGORY>SPECIFICATION_ITEM</CATEGORY>
+                  <P>
+                    <L-1 L="EN">This standard AUTOSAR type shall be 16 bit signed.</L-1>
+                  </P>
+                </TRACE>
+              </INTRODUCTION>
+              <BASE-TYPE-SIZE>16</BASE-TYPE-SIZE>
+              <BASE-TYPE-ENCODING>2C</BASE-TYPE-ENCODING>
+              <MEM-ALIGNMENT>16</MEM-ALIGNMENT>
+            </SW-BASE-TYPE>
+            <SW-BASE-TYPE>
+              <SHORT-NAME>boolean</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Boolean</L-4>
+              </LONG-NAME>
+              <CATEGORY>FIXED_LENGTH</CATEGORY>
+              <INTRODUCTION>
+                <TRACE>
+                  <SHORT-NAME>SWS_Platform_00060</SHORT-NAME>
+                  <CATEGORY>SPECIFICATION_ITEM</CATEGORY>
+                  <P>
+                    <L-1 L="EN">The boolean type shall always be mapped to a platform specific type where
+                    pointers can be applied to enable a passing of parameters via API. There are specific
+                    BIT types of some HW platforms which are very efficient but where no pointers can point to.</L-1>
+                  </P>
+                </TRACE>
+                <TRACE>
+                  <SHORT-NAME>SWS_Platform_00026</SHORT-NAME>
+                  <P>
+                    <L-1 L="EN">This standard AUTOSAR type shall only be used together with
+                    the definitions TRUE and FALSE. See PLATFORM027 for implementation and usage.</L-1>
+                  </P>
+                </TRACE>
+              </INTRODUCTION>
+              <BASE-TYPE-SIZE>8</BASE-TYPE-SIZE>
+              <BASE-TYPE-ENCODING>BOOLEAN</BASE-TYPE-ENCODING>
+            </SW-BASE-TYPE>
+            <SW-BASE-TYPE>
+              <SHORT-NAME>uint16</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">unsigned integer 16bit</L-4>
+              </LONG-NAME>
+              <CATEGORY>FIXED_LENGTH</CATEGORY>
+              <INTRODUCTION>
+                <TRACE>
+                  <SHORT-NAME>SWS_Platform_00014</SHORT-NAME>
+                  <CATEGORY>SPECIFICATION_ITEM</CATEGORY>
+                  <P>
+                    <L-1 L="EN">This standard AUTOSAR type shall be of 16 bit unsigned.</L-1>
+                  </P>
+                </TRACE>
+              </INTRODUCTION>
+              <BASE-TYPE-SIZE>16</BASE-TYPE-SIZE>
+              <BASE-TYPE-ENCODING>NONE</BASE-TYPE-ENCODING>
+              <MEM-ALIGNMENT>16</MEM-ALIGNMENT>
+            </SW-BASE-TYPE>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>CompuMethods</SHORT-NAME>
+          <ELEMENTS>
+            <COMPU-METHOD>
+              <SHORT-NAME>boolean</SHORT-NAME>
+              <CATEGORY>TEXTTABLE</CATEGORY>
+              <COMPU-INTERNAL-TO-PHYS>
+                <COMPU-SCALES>
+                  <COMPU-SCALE>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">0</UPPER-LIMIT>
+                    <COMPU-CONST>
+                      <VT>FALSE</VT>
+                    </COMPU-CONST>
+                  </COMPU-SCALE>
+                  <COMPU-SCALE>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">1</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">1</UPPER-LIMIT>
+                    <COMPU-CONST>
+                      <VT>TRUE</VT>
+                    </COMPU-CONST>
+                  </COMPU-SCALE>
+                </COMPU-SCALES>
+              </COMPU-INTERNAL-TO-PHYS>
+            </COMPU-METHOD>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>ImplementationDataTypes</SHORT-NAME>
+          <ELEMENTS>
+            <IMPLEMENTATION-DATA-TYPE>
+              <SHORT-NAME>boolean</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">Boolean</L-4>
+              </LONG-NAME>
+              <CATEGORY>VALUE</CATEGORY>
+              <INTRODUCTION>
+                <TRACE>
+                  <SHORT-NAME>SWS_Platform_00026</SHORT-NAME>
+                  <CATEGORY>SPECIFICATION_ITEM</CATEGORY>
+                  <P>
+                    <L-1 L="EN">This standard AUTOSAR type shall only be used together with the
+                    definitions TRUE and FALSE.</L-1>
+                  </P>
+                </TRACE>
+                <TRACE>
+                  <SHORT-NAME>SWS_Platform_00027</SHORT-NAME>
+                  <CATEGORY>SPECIFICATION_ITEM</CATEGORY>
+                  <P>
+                    <L-1 L="EN">The standard AUTOSAR type boolean shall be implemented as an unsigned integer
+                    with a bit length that is the shortest one natively supported
+                    by the platform (in general 8 bits).</L-1>
+                  </P>
+                </TRACE>
+              </INTRODUCTION>
+              <SW-DATA-DEF-PROPS>
+                <SW-DATA-DEF-PROPS-VARIANTS>
+                  <SW-DATA-DEF-PROPS-CONDITIONAL>
+                    <BASE-TYPE-REF DEST="SW-BASE-TYPE">/AUTOSAR_Platform/BaseTypes/boolean</BASE-TYPE-REF>
+                    <COMPU-METHOD-REF DEST="COMPU-METHOD">/AUTOSAR_Platform/CompuMethods/boolean</COMPU-METHOD-REF>
+                  </SW-DATA-DEF-PROPS-CONDITIONAL>
+                </SW-DATA-DEF-PROPS-VARIANTS>
+              </SW-DATA-DEF-PROPS>
+              <TYPE-EMITTER>Platform_Types</TYPE-EMITTER>
+            </IMPLEMENTATION-DATA-TYPE>
+            <IMPLEMENTATION-DATA-TYPE>
+              <SHORT-NAME>uint16</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">unsigned integer 16bit</L-4>
+              </LONG-NAME>
+              <CATEGORY>VALUE</CATEGORY>
+              <INTRODUCTION>
+                <TRACE>
+                  <SHORT-NAME>SWS_Platform_00014</SHORT-NAME>
+                  <CATEGORY>SPECIFICATION_ITEM</CATEGORY>
+                  <P>
+                    <L-1 L="EN">This standard AUTOSAR type shall be of 16 bit unsigned.</L-1>
+                  </P>
+                </TRACE>
+              </INTRODUCTION>
+              <SW-DATA-DEF-PROPS>
+                <SW-DATA-DEF-PROPS-VARIANTS>
+                  <SW-DATA-DEF-PROPS-CONDITIONAL>
+                    <BASE-TYPE-REF DEST="SW-BASE-TYPE">/AUTOSAR_Platform/BaseTypes/uint16</BASE-TYPE-REF>
+                  </SW-DATA-DEF-PROPS-CONDITIONAL>
+                </SW-DATA-DEF-PROPS-VARIANTS>
+              </SW-DATA-DEF-PROPS>
+              <TYPE-EMITTER>Platform_Types</TYPE-EMITTER>
+            </IMPLEMENTATION-DATA-TYPE>
+            <IMPLEMENTATION-DATA-TYPE>
+              <SHORT-NAME>sint16</SHORT-NAME>
+              <LONG-NAME>
+                <L-4 L="EN">signed integer 16bit</L-4>
+              </LONG-NAME>
+              <CATEGORY>VALUE</CATEGORY>
+              <INTRODUCTION>
+                <TRACE>
+                  <SHORT-NAME>SWS_Platform_00017</SHORT-NAME>
+                  <CATEGORY>SPECIFICATION_ITEM</CATEGORY>
+                  <P>
+                    <L-1 L="EN">This standard AUTOSAR type shall be 16 bit signed</L-1>
+                  </P>
+                </TRACE>
+              </INTRODUCTION>
+              <SW-DATA-DEF-PROPS>
+                <SW-DATA-DEF-PROPS-VARIANTS>
+                  <SW-DATA-DEF-PROPS-CONDITIONAL>
+                    <BASE-TYPE-REF DEST="SW-BASE-TYPE">/AUTOSAR_Platform/BaseTypes/sint16</BASE-TYPE-REF>
+                  </SW-DATA-DEF-PROPS-CONDITIONAL>
+                </SW-DATA-DEF-PROPS-VARIANTS>
+              </SW-DATA-DEF-PROPS>
+              <TYPE-EMITTER>Platform_Types</TYPE-EMITTER>
+            </IMPLEMENTATION-DATA-TYPE>
+          </ELEMENTS>
+        </AR-PACKAGE>
+      </AR-PACKAGES>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>CommunicationClusters</SHORT-NAME>
+      <ELEMENTS>
+        <CAN-CLUSTER>
+          <SHORT-NAME>CanCluster</SHORT-NAME>
+          <CAN-CLUSTER-VARIANTS>
+            <CAN-CLUSTER-CONDITIONAL>
+              <BAUDRATE>500000</BAUDRATE>
+              <PHYSICAL-CHANNELS>
+                <CAN-PHYSICAL-CHANNEL>
+                  <SHORT-NAME>CanPhysicalChannel</SHORT-NAME>
+                  <COMM-CONNECTORS>
+                    <COMMUNICATION-CONNECTOR-REF-CONDITIONAL>
+                      <COMMUNICATION-CONNECTOR-REF DEST="CAN-COMMUNICATION-CONNECTOR">/EcuInstances/VehicleSpeed/VehSpd_CanConnector</COMMUNICATION-CONNECTOR-REF>
+                    </COMMUNICATION-CONNECTOR-REF-CONDITIONAL>
+                  </COMM-CONNECTORS>
+                  <FRAME-TRIGGERINGS>
+                    <CAN-FRAME-TRIGGERING>
+                      <SHORT-NAME>CanFrameTrig_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+                      <FRAME-PORT-REFS>
+                        <FRAME-PORT-REF DEST="FRAME-PORT">/EcuInstances/VehicleSpeed/VehSpd_CanConnector/CanFrame_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</FRAME-PORT-REF>
+                      </FRAME-PORT-REFS>
+                      <FRAME-REF DEST="CAN-FRAME">/Pkg_System_Cfg/Pkg_Frame/CanFrame_EcuVehSpd_RoadWhlAgSpd_Rx</FRAME-REF>
+                      <PDU-TRIGGERINGS>
+                        <PDU-TRIGGERING-REF-CONDITIONAL>
+                          <PDU-TRIGGERING-REF DEST="PDU-TRIGGERING">/CommunicationClusters/CanCluster/CanPhysicalChannel/PduTrig_EcuVehSpd_RoadWhlAgSpd_Rx</PDU-TRIGGERING-REF>
+                        </PDU-TRIGGERING-REF-CONDITIONAL>
+                      </PDU-TRIGGERINGS>
+                      <CAN-ADDRESSING-MODE>STANDARD</CAN-ADDRESSING-MODE>
+                      <CAN-FRAME-RX-BEHAVIOR>CAN-20</CAN-FRAME-RX-BEHAVIOR>
+                      <IDENTIFIER>256</IDENTIFIER>
+                    </CAN-FRAME-TRIGGERING>
+                  </FRAME-TRIGGERINGS>
+                  <I-SIGNAL-TRIGGERINGS>
+                    <I-SIGNAL-TRIGGERING>
+                      <SHORT-NAME>ISignalTrig_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+                      <I-SIGNAL-PORT-REFS>
+                        <I-SIGNAL-PORT-REF DEST="I-SIGNAL-PORT">/EcuInstances/VehicleSpeed/VehSpd_CanConnector/ISig_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</I-SIGNAL-PORT-REF>
+                      </I-SIGNAL-PORT-REFS>
+                      <I-SIGNAL-REF DEST="I-SIGNAL">/Pkg_System_Cfg/Pkg_ISignal/ISig_EcuVehSpd_RoadWhlAgSpd_Rx</I-SIGNAL-REF>
+                    </I-SIGNAL-TRIGGERING>
+                  </I-SIGNAL-TRIGGERINGS>
+                  <PDU-TRIGGERINGS>
+                    <PDU-TRIGGERING>
+                      <SHORT-NAME>PduTrig_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+                      <I-PDU-PORT-REFS>
+                        <I-PDU-PORT-REF DEST="I-PDU-PORT">/EcuInstances/VehicleSpeed/VehSpd_CanConnector/ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</I-PDU-PORT-REF>
+                      </I-PDU-PORT-REFS>
+                      <I-PDU-REF DEST="I-SIGNAL-I-PDU">/Pkg_System_Cfg/Pkg_Pdus/ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx</I-PDU-REF>
+                      <I-SIGNAL-TRIGGERINGS>
+                        <I-SIGNAL-TRIGGERING-REF-CONDITIONAL>
+                          <I-SIGNAL-TRIGGERING-REF DEST="I-SIGNAL-TRIGGERING">/CommunicationClusters/CanCluster/CanPhysicalChannel/ISignalTrig_EcuVehSpd_RoadWhlAgSpd_Rx</I-SIGNAL-TRIGGERING-REF>
+                        </I-SIGNAL-TRIGGERING-REF-CONDITIONAL>
+                      </I-SIGNAL-TRIGGERINGS>
+                    </PDU-TRIGGERING>
+                  </PDU-TRIGGERINGS>
+                </CAN-PHYSICAL-CHANNEL>
+              </PHYSICAL-CHANNELS>
+              <PROTOCOL-NAME>CAN</PROTOCOL-NAME>
+            </CAN-CLUSTER-CONDITIONAL>
+          </CAN-CLUSTER-VARIANTS>
+        </CAN-CLUSTER>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>EcuInstances</SHORT-NAME>
+      <ELEMENTS>
+        <ECU-INSTANCE>
+          <SHORT-NAME>VehicleSpeed</SHORT-NAME>
+          <COMM-CONTROLLERS>
+            <CAN-COMMUNICATION-CONTROLLER>
+              <SHORT-NAME>VehSpd_CanController</SHORT-NAME>
+              <CAN-COMMUNICATION-CONTROLLER-VARIANTS>
+                <CAN-COMMUNICATION-CONTROLLER-CONDITIONAL>
+                  <WAKE-UP-BY-CONTROLLER-SUPPORTED>false</WAKE-UP-BY-CONTROLLER-SUPPORTED>
+                  <CAN-CONTROLLER-ATTRIBUTES>
+                    <CAN-CONTROLLER-CONFIGURATION>
+                      <PROP-SEG>8</PROP-SEG>
+                      <SYNC-JUMP-WIDTH>3</SYNC-JUMP-WIDTH>
+                      <TIME-SEG-1>7</TIME-SEG-1>
+                      <TIME-SEG-2>4</TIME-SEG-2>
+                    </CAN-CONTROLLER-CONFIGURATION>
+                  </CAN-CONTROLLER-ATTRIBUTES>
+                </CAN-COMMUNICATION-CONTROLLER-CONDITIONAL>
+              </CAN-COMMUNICATION-CONTROLLER-VARIANTS>
+            </CAN-COMMUNICATION-CONTROLLER>
+          </COMM-CONTROLLERS>
+          <CONNECTORS>
+            <CAN-COMMUNICATION-CONNECTOR>
+              <SHORT-NAME>VehSpd_CanConnector</SHORT-NAME>
+              <COMM-CONTROLLER-REF DEST="CAN-COMMUNICATION-CONTROLLER">/EcuInstances/VehicleSpeed/VehSpd_CanController</COMM-CONTROLLER-REF>
+              <ECU-COMM-PORT-INSTANCES>
+                <FRAME-PORT>
+                  <SHORT-NAME>CanFrame_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</SHORT-NAME>
+                  <COMMUNICATION-DIRECTION>IN</COMMUNICATION-DIRECTION>
+                </FRAME-PORT>
+                <I-PDU-PORT>
+                  <SHORT-NAME>ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</SHORT-NAME>
+                  <COMMUNICATION-DIRECTION>IN</COMMUNICATION-DIRECTION>
+                </I-PDU-PORT>
+                <I-SIGNAL-PORT>
+                  <SHORT-NAME>ISig_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</SHORT-NAME>
+                  <COMMUNICATION-DIRECTION>IN</COMMUNICATION-DIRECTION>
+                </I-SIGNAL-PORT>
+              </ECU-COMM-PORT-INSTANCES>
+            </CAN-COMMUNICATION-CONNECTOR>
+          </CONNECTORS>
+          <PARTITIONS>
+            <ECU-PARTITION>
+              <SHORT-NAME>EcuPartVehSpd</SHORT-NAME>
+            </ECU-PARTITION>
+          </PARTITIONS>
+        </ECU-INSTANCE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>EcuVehicleSpeed</SHORT-NAME>
+      <ELEMENTS>
+        <HW-ELEMENT>
+          <SHORT-NAME>VehicleSpeed</SHORT-NAME>
+          <HW-TYPE-REF DEST="HW-TYPE">/HwTypes/EcuType</HW-TYPE-REF>
+          <HW-CATEGORY-REFS>
+            <HW-CATEGORY-REF DEST="HW-CATEGORY">/HwCategorys/Ecu</HW-CATEGORY-REF>
+          </HW-CATEGORY-REFS>
+          <HW-PIN-GROUPS>
+            <HW-PIN-GROUP>
+              <SHORT-NAME>CanBus</SHORT-NAME>
+            </HW-PIN-GROUP>
+          </HW-PIN-GROUPS>
+        </HW-ELEMENT>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>HwCategorys</SHORT-NAME>
+      <ELEMENTS>
+        <HW-CATEGORY>
+          <SHORT-NAME>Ecu</SHORT-NAME>
+        </HW-CATEGORY>
+        <HW-CATEGORY>
+          <SHORT-NAME>Digital</SHORT-NAME>
+        </HW-CATEGORY>
+        <HW-CATEGORY>
+          <SHORT-NAME>SensorActuator</SHORT-NAME>
+        </HW-CATEGORY>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>HwTypes</SHORT-NAME>
+      <ELEMENTS>
+        <HW-TYPE>
+          <SHORT-NAME>EcuType</SHORT-NAME>
+          <HW-CATEGORY-REFS>
+            <HW-CATEGORY-REF DEST="HW-CATEGORY">/HwCategorys/Ecu</HW-CATEGORY-REF>
+          </HW-CATEGORY-REFS>
+        </HW-TYPE>
+        <HW-TYPE>
+          <SHORT-NAME>IoDType</SHORT-NAME>
+          <HW-CATEGORY-REFS>
+            <HW-CATEGORY-REF DEST="HW-CATEGORY">/HwCategorys/Digital</HW-CATEGORY-REF>
+          </HW-CATEGORY-REFS>
+        </HW-TYPE>
+        <HW-TYPE>
+          <SHORT-NAME>SensorActuatorType</SHORT-NAME>
+          <HW-CATEGORY-REFS>
+            <HW-CATEGORY-REF DEST="HW-CATEGORY">/HwCategorys/SensorActuator</HW-CATEGORY-REF>
+          </HW-CATEGORY-REFS>
+        </HW-TYPE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>Pkg_ImplementationDataTypes</SHORT-NAME>
+      <ELEMENTS>
+        <IMPLEMENTATION-DATA-TYPE>
+          <SHORT-NAME>OnOff1_Impl</SHORT-NAME>
+          <CATEGORY>TYPE_REFERENCE</CATEGORY>
+          <SW-DATA-DEF-PROPS>
+            <SW-DATA-DEF-PROPS-VARIANTS>
+              <SW-DATA-DEF-PROPS-CONDITIONAL>
+                <IMPLEMENTATION-DATA-TYPE-REF DEST="IMPLEMENTATION-DATA-TYPE">/AUTOSAR_Platform/ImplementationDataTypes/boolean</IMPLEMENTATION-DATA-TYPE-REF>
+              </SW-DATA-DEF-PROPS-CONDITIONAL>
+            </SW-DATA-DEF-PROPS-VARIANTS>
+          </SW-DATA-DEF-PROPS>
+        </IMPLEMENTATION-DATA-TYPE>
+        <IMPLEMENTATION-DATA-TYPE>
+          <SHORT-NAME>Spd3_Impl</SHORT-NAME>
+          <CATEGORY>TYPE_REFERENCE</CATEGORY>
+          <SW-DATA-DEF-PROPS>
+            <SW-DATA-DEF-PROPS-VARIANTS>
+              <SW-DATA-DEF-PROPS-CONDITIONAL>
+                <IMPLEMENTATION-DATA-TYPE-REF DEST="IMPLEMENTATION-DATA-TYPE">/AUTOSAR_Platform/ImplementationDataTypes/uint16</IMPLEMENTATION-DATA-TYPE-REF>
+              </SW-DATA-DEF-PROPS-CONDITIONAL>
+            </SW-DATA-DEF-PROPS-VARIANTS>
+          </SW-DATA-DEF-PROPS>
+        </IMPLEMENTATION-DATA-TYPE>
+        <IMPLEMENTATION-DATA-TYPE>
+          <SHORT-NAME>AgSpd2_Impl</SHORT-NAME>
+          <CATEGORY>TYPE_REFERENCE</CATEGORY>
+          <SW-DATA-DEF-PROPS>
+            <SW-DATA-DEF-PROPS-VARIANTS>
+              <SW-DATA-DEF-PROPS-CONDITIONAL>
+                <IMPLEMENTATION-DATA-TYPE-REF DEST="IMPLEMENTATION-DATA-TYPE">/AUTOSAR_Platform/ImplementationDataTypes/sint16</IMPLEMENTATION-DATA-TYPE-REF>
+              </SW-DATA-DEF-PROPS-CONDITIONAL>
+            </SW-DATA-DEF-PROPS-VARIANTS>
+          </SW-DATA-DEF-PROPS>
+        </IMPLEMENTATION-DATA-TYPE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>Pkg_MappingSets</SHORT-NAME>
+      <ELEMENTS>
+        <DATA-TYPE-MAPPING-SET>
+          <SHORT-NAME>DataTypeMappingSet_LedOnOff</SHORT-NAME>
+          <DATA-TYPE-MAPS>
+            <DATA-TYPE-MAP>
+              <APPLICATION-DATA-TYPE-REF DEST="APPLICATION-PRIMITIVE-DATA-TYPE">/AUTOSAR_AISpecification/ApplicationDataTypes/OnOff1</APPLICATION-DATA-TYPE-REF>
+              <IMPLEMENTATION-DATA-TYPE-REF DEST="IMPLEMENTATION-DATA-TYPE">/Pkg_ImplementationDataTypes/OnOff1_Impl</IMPLEMENTATION-DATA-TYPE-REF>
+            </DATA-TYPE-MAP>
+          </DATA-TYPE-MAPS>
+        </DATA-TYPE-MAPPING-SET>
+        <DATA-TYPE-MAPPING-SET>
+          <SHORT-NAME>DataTypeMappingSet_Spd</SHORT-NAME>
+          <DATA-TYPE-MAPS>
+            <DATA-TYPE-MAP>
+              <APPLICATION-DATA-TYPE-REF DEST="APPLICATION-PRIMITIVE-DATA-TYPE">/AUTOSAR_AISpecification/ApplicationDataTypes/Spd3</APPLICATION-DATA-TYPE-REF>
+              <IMPLEMENTATION-DATA-TYPE-REF DEST="IMPLEMENTATION-DATA-TYPE">/Pkg_ImplementationDataTypes/Spd3_Impl</IMPLEMENTATION-DATA-TYPE-REF>
+            </DATA-TYPE-MAP>
+          </DATA-TYPE-MAPS>
+        </DATA-TYPE-MAPPING-SET>
+        <DATA-TYPE-MAPPING-SET>
+          <SHORT-NAME>DataTypeMappingSet_AgSpd</SHORT-NAME>
+          <DATA-TYPE-MAPS>
+            <DATA-TYPE-MAP>
+              <APPLICATION-DATA-TYPE-REF DEST="APPLICATION-PRIMITIVE-DATA-TYPE">/AUTOSAR_AISpecification/ApplicationDataTypes/AgSpd2</APPLICATION-DATA-TYPE-REF>
+              <IMPLEMENTATION-DATA-TYPE-REF DEST="IMPLEMENTATION-DATA-TYPE">/Pkg_ImplementationDataTypes/AgSpd2_Impl</IMPLEMENTATION-DATA-TYPE-REF>
+            </DATA-TYPE-MAP>
+          </DATA-TYPE-MAPS>
+        </DATA-TYPE-MAPPING-SET>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>Pkg_System_Cfg</SHORT-NAME>
+      <AR-PACKAGES>
+        <AR-PACKAGE>
+          <SHORT-NAME>Pkg_Frame</SHORT-NAME>
+          <ELEMENTS>
+            <CAN-FRAME>
+              <SHORT-NAME>CanFrame_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+              <FRAME-LENGTH>8</FRAME-LENGTH>
+              <PDU-TO-FRAME-MAPPINGS>
+                <PDU-TO-FRAME-MAPPING>
+                  <SHORT-NAME>ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+                  <PACKING-BYTE-ORDER>MOST-SIGNIFICANT-BYTE-LAST</PACKING-BYTE-ORDER>
+                  <PDU-REF DEST="I-SIGNAL-I-PDU">/Pkg_System_Cfg/Pkg_Pdus/ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx</PDU-REF>
+                  <START-POSITION>0</START-POSITION>
+                  <UPDATE-INDICATION-BIT-POSITION>0</UPDATE-INDICATION-BIT-POSITION>
+                </PDU-TO-FRAME-MAPPING>
+              </PDU-TO-FRAME-MAPPINGS>
+            </CAN-FRAME>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>Pkg_ISignal</SHORT-NAME>
+          <ELEMENTS>
+            <I-SIGNAL>
+              <SHORT-NAME>ISig_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+              <DATA-TYPE-POLICY>LEGACY</DATA-TYPE-POLICY>
+              <LENGTH>16</LENGTH>
+              <NETWORK-REPRESENTATION-PROPS>
+                <SW-DATA-DEF-PROPS-VARIANTS>
+                  <SW-DATA-DEF-PROPS-CONDITIONAL>
+                    <BASE-TYPE-REF DEST="SW-BASE-TYPE">/AUTOSAR_Platform/BaseTypes/sint16</BASE-TYPE-REF>
+                  </SW-DATA-DEF-PROPS-CONDITIONAL>
+                </SW-DATA-DEF-PROPS-VARIANTS>
+              </NETWORK-REPRESENTATION-PROPS>
+              <SYSTEM-SIGNAL-REF DEST="SYSTEM-SIGNAL">/Pkg_System_Cfg/Pkg_Signal/SysSig_EcuVehSpd_RoadWhlAgSpd_Rx</SYSTEM-SIGNAL-REF>
+            </I-SIGNAL>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>Pkg_Pdus</SHORT-NAME>
+          <ELEMENTS>
+            <I-SIGNAL-I-PDU>
+              <SHORT-NAME>ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+              <LENGTH>8</LENGTH>
+              <I-SIGNAL-TO-PDU-MAPPINGS>
+                <I-SIGNAL-TO-I-PDU-MAPPING>
+                  <SHORT-NAME>ISig_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+                  <I-SIGNAL-REF DEST="I-SIGNAL">/Pkg_System_Cfg/Pkg_ISignal/ISig_EcuVehSpd_RoadWhlAgSpd_Rx</I-SIGNAL-REF>
+                  <PACKING-BYTE-ORDER>MOST-SIGNIFICANT-BYTE-LAST</PACKING-BYTE-ORDER>
+                  <START-POSITION>0</START-POSITION>
+                </I-SIGNAL-TO-I-PDU-MAPPING>
+              </I-SIGNAL-TO-PDU-MAPPINGS>
+              <UNUSED-BIT-PATTERN>0</UNUSED-BIT-PATTERN>
+            </I-SIGNAL-I-PDU>
+          </ELEMENTS>
+        </AR-PACKAGE>
+        <AR-PACKAGE>
+          <SHORT-NAME>Pkg_Signal</SHORT-NAME>
+          <ELEMENTS>
+            <SYSTEM-SIGNAL>
+              <SHORT-NAME>SysSig_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+              <DYNAMIC-LENGTH>false</DYNAMIC-LENGTH>
+              <PHYSICAL-PROPS>
+                <SW-DATA-DEF-PROPS-VARIANTS>
+                  <SW-DATA-DEF-PROPS-CONDITIONAL>
+                    <COMPU-METHOD-REF DEST="COMPU-METHOD">/AUTOSAR_AISpecification/CompuMethods/AgSpd2</COMPU-METHOD-REF>
+                  </SW-DATA-DEF-PROPS-CONDITIONAL>
+                </SW-DATA-DEF-PROPS-VARIANTS>
+              </PHYSICAL-PROPS>
+            </SYSTEM-SIGNAL>
+          </ELEMENTS>
+        </AR-PACKAGE>
+      </AR-PACKAGES>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>SwComponentTypes</SHORT-NAME>
+      <ELEMENTS>
+        <APPLICATION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>VehSpdCalc</SHORT-NAME>
+          <ADMIN-DATA>
+            <SDGS>
+              <SDG GID="Master">
+                <SD>true</SD>
+              </SDG>
+            </SDGS>
+          </ADMIN-DATA>
+          <PORTS>
+            <R-PORT-PROTOTYPE>
+              <SHORT-NAME>WhlSpdConsoldInp</SHORT-NAME>
+              <REQUIRED-COM-SPECS>
+                <NONQUEUED-RECEIVER-COM-SPEC>
+                  <DATA-ELEMENT-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1/RoadWhlAgSpd</DATA-ELEMENT-REF>
+                  <INIT-VALUE>
+                    <NUMERICAL-VALUE-SPECIFICATION>
+                      <SHORT-LABEL>Default_WhlSpdConsoldInp</SHORT-LABEL>
+                      <VALUE>0</VALUE>
+                    </NUMERICAL-VALUE-SPECIFICATION>
+                  </INIT-VALUE>
+                </NONQUEUED-RECEIVER-COM-SPEC>
+              </REQUIRED-COM-SPECS>
+              <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1</REQUIRED-INTERFACE-TREF>
+            </R-PORT-PROTOTYPE>
+            <P-PORT-PROTOTYPE>
+              <SHORT-NAME>VehSpdOutp</SHORT-NAME>
+              <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/VehSpd1</PROVIDED-INTERFACE-TREF>
+            </P-PORT-PROTOTYPE>
+          </PORTS>
+          <INTERNAL-BEHAVIORS>
+            <SWC-INTERNAL-BEHAVIOR>
+              <SHORT-NAME>VehSpdCalc_IB</SHORT-NAME>
+              <DATA-TYPE-MAPPING-REFS>
+                <DATA-TYPE-MAPPING-REF DEST="DATA-TYPE-MAPPING-SET">/Pkg_MappingSets/DataTypeMappingSet_AgSpd</DATA-TYPE-MAPPING-REF>
+                <DATA-TYPE-MAPPING-REF DEST="DATA-TYPE-MAPPING-SET">/Pkg_MappingSets/DataTypeMappingSet_Spd</DATA-TYPE-MAPPING-REF>
+              </DATA-TYPE-MAPPING-REFS>
+              <EVENTS>
+                <DATA-RECEIVED-EVENT>
+                  <SHORT-NAME>DRE_WhlSpdConsoldInp</SHORT-NAME>
+                  <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/SwComponentTypes/VehSpdCalc/VehSpdCalc_IB/RE_VehSpdCalc</START-ON-EVENT-REF>
+                  <DATA-IREF>
+                    <CONTEXT-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdCalc/WhlSpdConsoldInp</CONTEXT-R-PORT-REF>
+                    <TARGET-DATA-ELEMENT-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1/RoadWhlAgSpd</TARGET-DATA-ELEMENT-REF>
+                  </DATA-IREF>
+                </DATA-RECEIVED-EVENT>
+              </EVENTS>
+              <RUNNABLES>
+                <RUNNABLE-ENTITY>
+                  <SHORT-NAME>RE_VehSpdCalc</SHORT-NAME>
+                  <MINIMUM-START-INTERVAL>0.01</MINIMUM-START-INTERVAL>
+                  <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+                  <DATA-RECEIVE-POINT-BY-ARGUMENTS>
+                    <VARIABLE-ACCESS>
+                      <SHORT-NAME>DRPA_WhlSpdConsoldInp</SHORT-NAME>
+                      <ACCESSED-VARIABLE>
+                        <AUTOSAR-VARIABLE-IREF>
+                          <PORT-PROTOTYPE-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdCalc/WhlSpdConsoldInp</PORT-PROTOTYPE-REF>
+                          <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1/RoadWhlAgSpd</TARGET-DATA-PROTOTYPE-REF>
+                        </AUTOSAR-VARIABLE-IREF>
+                      </ACCESSED-VARIABLE>
+                    </VARIABLE-ACCESS>
+                  </DATA-RECEIVE-POINT-BY-ARGUMENTS>
+                  <DATA-WRITE-ACCESSS>
+                    <VARIABLE-ACCESS>
+                      <SHORT-NAME>DWA_VehSpdOutp</SHORT-NAME>
+                      <ACCESSED-VARIABLE>
+                        <AUTOSAR-VARIABLE-IREF>
+                          <PORT-PROTOTYPE-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/VehSpdCalc/VehSpdOutp</PORT-PROTOTYPE-REF>
+                          <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/VehSpd1/VehSpd</TARGET-DATA-PROTOTYPE-REF>
+                        </AUTOSAR-VARIABLE-IREF>
+                      </ACCESSED-VARIABLE>
+                    </VARIABLE-ACCESS>
+                  </DATA-WRITE-ACCESSS>
+                  <SYMBOL>RE_VehSpdCalc</SYMBOL>
+                </RUNNABLE-ENTITY>
+              </RUNNABLES>
+              <SUPPORTS-MULTIPLE-INSTANTIATION>true</SUPPORTS-MULTIPLE-INSTANTIATION>
+            </SWC-INTERNAL-BEHAVIOR>
+          </INTERNAL-BEHAVIORS>
+        </APPLICATION-SW-COMPONENT-TYPE>
+        <ECU-ABSTRACTION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>VehSpdVirt</SHORT-NAME>
+          <ADMIN-DATA>
+            <SDGS>
+              <SDG GID="Master">
+                <SD>true</SD>
+              </SDG>
+            </SDGS>
+          </ADMIN-DATA>
+          <PORTS>
+            <R-PORT-PROTOTYPE>
+              <SHORT-NAME>Led0CmdInp</SHORT-NAME>
+              <REQUIRED-COM-SPECS>
+                <NONQUEUED-RECEIVER-COM-SPEC>
+                  <DATA-ELEMENT-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1/Cmd</DATA-ELEMENT-REF>
+                  <INIT-VALUE>
+                    <NUMERICAL-VALUE-SPECIFICATION>
+                      <SHORT-LABEL>Default_Led0CmdInp</SHORT-LABEL>
+                      <VALUE>0</VALUE>
+                    </NUMERICAL-VALUE-SPECIFICATION>
+                  </INIT-VALUE>
+                </NONQUEUED-RECEIVER-COM-SPEC>
+              </REQUIRED-COM-SPECS>
+              <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1</REQUIRED-INTERFACE-TREF>
+            </R-PORT-PROTOTYPE>
+            <R-PORT-PROTOTYPE>
+              <SHORT-NAME>Led1CmdInp</SHORT-NAME>
+              <REQUIRED-COM-SPECS>
+                <NONQUEUED-RECEIVER-COM-SPEC>
+                  <DATA-ELEMENT-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1/Cmd</DATA-ELEMENT-REF>
+                  <INIT-VALUE>
+                    <NUMERICAL-VALUE-SPECIFICATION>
+                      <SHORT-LABEL>Default_Led1CmdInp</SHORT-LABEL>
+                      <VALUE>0</VALUE>
+                    </NUMERICAL-VALUE-SPECIFICATION>
+                  </INIT-VALUE>
+                </NONQUEUED-RECEIVER-COM-SPEC>
+              </REQUIRED-COM-SPECS>
+              <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1</REQUIRED-INTERFACE-TREF>
+            </R-PORT-PROTOTYPE>
+          </PORTS>
+          <INTERNAL-BEHAVIORS>
+            <SWC-INTERNAL-BEHAVIOR>
+              <SHORT-NAME>VehSpdVirt_IB</SHORT-NAME>
+              <DATA-TYPE-MAPPING-REFS>
+                <DATA-TYPE-MAPPING-REF DEST="DATA-TYPE-MAPPING-SET">/Pkg_MappingSets/DataTypeMappingSet_LedOnOff</DATA-TYPE-MAPPING-REF>
+              </DATA-TYPE-MAPPING-REFS>
+              <EVENTS>
+                <TIMING-EVENT>
+                  <SHORT-NAME>TE_10ms</SHORT-NAME>
+                  <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/SwComponentTypes/VehSpdVirt/VehSpdVirt_IB/RE_VehSpdVirt_10ms</START-ON-EVENT-REF>
+                  <PERIOD>0.01</PERIOD>
+                </TIMING-EVENT>
+                <INIT-EVENT>
+                  <SHORT-NAME>IE_WhlSpd_Init</SHORT-NAME>
+                  <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/SwComponentTypes/VehSpdVirt/VehSpdVirt_IB/RE_VehSpd_Init</START-ON-EVENT-REF>
+                </INIT-EVENT>
+              </EVENTS>
+              <RUNNABLES>
+                <RUNNABLE-ENTITY>
+                  <SHORT-NAME>RE_VehSpdVirt_10ms</SHORT-NAME>
+                  <DATA-READ-ACCESSS>
+                    <VARIABLE-ACCESS>
+                      <SHORT-NAME>DRA_Led0CmdInp</SHORT-NAME>
+                      <ACCESSED-VARIABLE>
+                        <AUTOSAR-VARIABLE-IREF>
+                          <PORT-PROTOTYPE-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdVirt/Led0CmdInp</PORT-PROTOTYPE-REF>
+                          <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1/Cmd</TARGET-DATA-PROTOTYPE-REF>
+                        </AUTOSAR-VARIABLE-IREF>
+                      </ACCESSED-VARIABLE>
+                    </VARIABLE-ACCESS>
+                    <VARIABLE-ACCESS>
+                      <SHORT-NAME>DRA_Led1CmdInp</SHORT-NAME>
+                      <ACCESSED-VARIABLE>
+                        <AUTOSAR-VARIABLE-IREF>
+                          <PORT-PROTOTYPE-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdVirt/Led1CmdInp</PORT-PROTOTYPE-REF>
+                          <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1/Cmd</TARGET-DATA-PROTOTYPE-REF>
+                        </AUTOSAR-VARIABLE-IREF>
+                      </ACCESSED-VARIABLE>
+                    </VARIABLE-ACCESS>
+                  </DATA-READ-ACCESSS>
+                  <SYMBOL>RE_VehSpdVirt_10ms</SYMBOL>
+                </RUNNABLE-ENTITY>
+                <RUNNABLE-ENTITY>
+                  <SHORT-NAME>RE_VehSpd_Init</SHORT-NAME>
+                  <SYMBOL>RE_VehSpd_Init</SYMBOL>
+                </RUNNABLE-ENTITY>
+              </RUNNABLES>
+              <SUPPORTS-MULTIPLE-INSTANTIATION>false</SUPPORTS-MULTIPLE-INSTANTIATION>
+            </SWC-INTERNAL-BEHAVIOR>
+          </INTERNAL-BEHAVIORS>
+          <HARDWARE-ELEMENT-REFS>
+            <HARDWARE-ELEMENT-REF DEST="HW-TYPE">/HwTypes/IoDType</HARDWARE-ELEMENT-REF>
+          </HARDWARE-ELEMENT-REFS>
+        </ECU-ABSTRACTION-SW-COMPONENT-TYPE>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>VehicleSpeedComposition</SHORT-NAME>
+          <PORTS>
+            <R-PORT-PROTOTYPE>
+              <SHORT-NAME>WhlSpdConsoldInp</SHORT-NAME>
+              <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1</REQUIRED-INTERFACE-TREF>
+            </R-PORT-PROTOTYPE>
+          </PORTS>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_VehSpdCalc</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/SwComponentTypes/VehSpdCalc</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_VehSpdActr</SHORT-NAME>
+              <TYPE-TREF DEST="SENSOR-ACTUATOR-SW-COMPONENT-TYPE">/SwComponentTypes/VehSpdActr</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_VehSpdVirt</SHORT-NAME>
+              <TYPE-TREF DEST="ECU-ABSTRACTION-SW-COMPONENT-TYPE">/SwComponentTypes/VehSpdVirt</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+          <CONNECTORS>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>ASC_CPT_VehSpdActr_Led0CmdOutp_CPT_VehSpdVirt_Led0CmdInp</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdActr</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/Led0CmdOutp</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdVirt</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdVirt/Led0CmdInp</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>ASC_CPT_VehSpdActr_Led1CmdOutp_CPT_VehSpdVirt_Led1CmdInp</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdActr</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/Led1CmdOutp</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdVirt</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdVirt/Led1CmdInp</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <DELEGATION-SW-CONNECTOR>
+              <SHORT-NAME>DSC_CPT_VehSpdCalc_WhlSpdConsoldInp_WhlSpdConsoldInp</SHORT-NAME>
+              <INNER-PORT-IREF>
+                <R-PORT-IN-COMPOSITION-INSTANCE-REF>
+                  <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdCalc</CONTEXT-COMPONENT-REF>
+                  <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdCalc/WhlSpdConsoldInp</TARGET-R-PORT-REF>
+                </R-PORT-IN-COMPOSITION-INSTANCE-REF>
+              </INNER-PORT-IREF>
+              <OUTER-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/WhlSpdConsoldInp</OUTER-PORT-REF>
+            </DELEGATION-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>ASC_CPT_VehSpdCalc_VehSpdOutp_CPT_VehSpdActr_VehSpdInp</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdCalc</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/VehSpdCalc/VehSpdOutp</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdActr</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/VehSpdInp</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+          </CONNECTORS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+        <SENSOR-ACTUATOR-SW-COMPONENT-TYPE>
+          <SHORT-NAME>VehSpdActr</SHORT-NAME>
+          <ADMIN-DATA>
+            <SDGS>
+              <SDG GID="Master">
+                <SD>true</SD>
+              </SDG>
+            </SDGS>
+          </ADMIN-DATA>
+          <PORTS>
+            <R-PORT-PROTOTYPE>
+              <SHORT-NAME>VehSpdInp</SHORT-NAME>
+              <REQUIRED-COM-SPECS>
+                <NONQUEUED-RECEIVER-COM-SPEC>
+                  <DATA-ELEMENT-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/VehSpd1/VehSpd</DATA-ELEMENT-REF>
+                  <INIT-VALUE>
+                    <NUMERICAL-VALUE-SPECIFICATION>
+                      <SHORT-LABEL>Default_VehSpdInp</SHORT-LABEL>
+                      <VALUE>0</VALUE>
+                    </NUMERICAL-VALUE-SPECIFICATION>
+                  </INIT-VALUE>
+                </NONQUEUED-RECEIVER-COM-SPEC>
+              </REQUIRED-COM-SPECS>
+              <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/VehSpd1</REQUIRED-INTERFACE-TREF>
+            </R-PORT-PROTOTYPE>
+            <P-PORT-PROTOTYPE>
+              <SHORT-NAME>Led0CmdOutp</SHORT-NAME>
+              <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1</PROVIDED-INTERFACE-TREF>
+            </P-PORT-PROTOTYPE>
+            <P-PORT-PROTOTYPE>
+              <SHORT-NAME>Led1CmdOutp</SHORT-NAME>
+              <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1</PROVIDED-INTERFACE-TREF>
+            </P-PORT-PROTOTYPE>
+          </PORTS>
+          <INTERNAL-BEHAVIORS>
+            <SWC-INTERNAL-BEHAVIOR>
+              <SHORT-NAME>VehSpdActr_IB</SHORT-NAME>
+              <DATA-TYPE-MAPPING-REFS>
+                <DATA-TYPE-MAPPING-REF DEST="DATA-TYPE-MAPPING-SET">/Pkg_MappingSets/DataTypeMappingSet_Spd</DATA-TYPE-MAPPING-REF>
+                <DATA-TYPE-MAPPING-REF DEST="DATA-TYPE-MAPPING-SET">/Pkg_MappingSets/DataTypeMappingSet_LedOnOff</DATA-TYPE-MAPPING-REF>
+              </DATA-TYPE-MAPPING-REFS>
+              <EVENTS>
+                <DATA-RECEIVED-EVENT>
+                  <SHORT-NAME>DRE_VehSpdInp</SHORT-NAME>
+                  <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/SwComponentTypes/VehSpdActr/VehSpdActr_IB/RE_VehSpdActr</START-ON-EVENT-REF>
+                  <DATA-IREF>
+                    <CONTEXT-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/VehSpdInp</CONTEXT-R-PORT-REF>
+                    <TARGET-DATA-ELEMENT-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/VehSpd1/VehSpd</TARGET-DATA-ELEMENT-REF>
+                  </DATA-IREF>
+                </DATA-RECEIVED-EVENT>
+              </EVENTS>
+              <RUNNABLES>
+                <RUNNABLE-ENTITY>
+                  <SHORT-NAME>RE_VehSpdActr</SHORT-NAME>
+                  <MINIMUM-START-INTERVAL>0.01</MINIMUM-START-INTERVAL>
+                  <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+                  <DATA-READ-ACCESSS>
+                    <VARIABLE-ACCESS>
+                      <SHORT-NAME>DRA_VehSpdInp</SHORT-NAME>
+                      <ACCESSED-VARIABLE>
+                        <AUTOSAR-VARIABLE-IREF>
+                          <PORT-PROTOTYPE-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/VehSpdInp</PORT-PROTOTYPE-REF>
+                          <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/VehSpd1/VehSpd</TARGET-DATA-PROTOTYPE-REF>
+                        </AUTOSAR-VARIABLE-IREF>
+                      </ACCESSED-VARIABLE>
+                    </VARIABLE-ACCESS>
+                  </DATA-READ-ACCESSS>
+                  <DATA-WRITE-ACCESSS>
+                    <VARIABLE-ACCESS>
+                      <SHORT-NAME>DWA_Led0CmdOutp</SHORT-NAME>
+                      <ACCESSED-VARIABLE>
+                        <AUTOSAR-VARIABLE-IREF>
+                          <PORT-PROTOTYPE-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/Led0CmdOutp</PORT-PROTOTYPE-REF>
+                          <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1/Cmd</TARGET-DATA-PROTOTYPE-REF>
+                        </AUTOSAR-VARIABLE-IREF>
+                      </ACCESSED-VARIABLE>
+                    </VARIABLE-ACCESS>
+                    <VARIABLE-ACCESS>
+                      <SHORT-NAME>DWA_Led1CmdOutp</SHORT-NAME>
+                      <ACCESSED-VARIABLE>
+                        <AUTOSAR-VARIABLE-IREF>
+                          <PORT-PROTOTYPE-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/Led1CmdOutp</PORT-PROTOTYPE-REF>
+                          <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/LedCmd1/Cmd</TARGET-DATA-PROTOTYPE-REF>
+                        </AUTOSAR-VARIABLE-IREF>
+                      </ACCESSED-VARIABLE>
+                    </VARIABLE-ACCESS>
+                  </DATA-WRITE-ACCESSS>
+                  <SYMBOL>RE_VehSpdActr</SYMBOL>
+                </RUNNABLE-ENTITY>
+              </RUNNABLES>
+              <SUPPORTS-MULTIPLE-INSTANTIATION>true</SUPPORTS-MULTIPLE-INSTANTIATION>
+            </SWC-INTERNAL-BEHAVIOR>
+          </INTERNAL-BEHAVIORS>
+          <SENSOR-ACTUATOR-REF DEST="HW-TYPE">/HwTypes/SensorActuatorType</SENSOR-ACTUATOR-REF>
+        </SENSOR-ACTUATOR-SW-COMPONENT-TYPE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>System</SHORT-NAME>
+      <ELEMENTS>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>TopLevelComposition</SHORT-NAME>
+          <PORTS>
+            <R-PORT-PROTOTYPE>
+              <SHORT-NAME>WhlSpdConsoldInp</SHORT-NAME>
+              <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1</REQUIRED-INTERFACE-TREF>
+            </R-PORT-PROTOTYPE>
+          </PORTS>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_VehicleSpeedComposition</SHORT-NAME>
+              <TYPE-TREF DEST="COMPOSITION-SW-COMPONENT-TYPE">/SwComponentTypes/VehicleSpeedComposition</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+          <CONNECTORS>
+            <DELEGATION-SW-CONNECTOR>
+              <SHORT-NAME>DSC_CPT_VehicleSpeedComposition_WhlSpdConsoldInp_WhlSpdConsoldInp</SHORT-NAME>
+              <INNER-PORT-IREF>
+                <R-PORT-IN-COMPOSITION-INSTANCE-REF>
+                  <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/System/TopLevelComposition/CPT_VehicleSpeedComposition</CONTEXT-COMPONENT-REF>
+                  <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/WhlSpdConsoldInp</TARGET-R-PORT-REF>
+                </R-PORT-IN-COMPOSITION-INSTANCE-REF>
+              </INNER-PORT-IREF>
+              <OUTER-PORT-REF DEST="R-PORT-PROTOTYPE">/System/TopLevelComposition/WhlSpdConsoldInp</OUTER-PORT-REF>
+            </DELEGATION-SW-CONNECTOR>
+          </CONNECTORS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>Systems</SHORT-NAME>
+      <ELEMENTS>
+        <SYSTEM>
+          <SHORT-NAME>PF_System</SHORT-NAME>
+          <CATEGORY>SYSTEM_EXTRACT</CATEGORY>
+          <ECU-EXTRACT-VERSION>1.0.0</ECU-EXTRACT-VERSION>
+          <FIBEX-ELEMENTS>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="CAN-CLUSTER">/CommunicationClusters/CanCluster</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="ECU-INSTANCE">/EcuInstances/VehicleSpeed</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="CAN-FRAME">/Pkg_System_Cfg/Pkg_Frame/CanFrame_EcuVehSpd_RoadWhlAgSpd_Rx</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="I-SIGNAL">/Pkg_System_Cfg/Pkg_ISignal/ISig_EcuVehSpd_RoadWhlAgSpd_Rx</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="I-SIGNAL-I-PDU">/Pkg_System_Cfg/Pkg_Pdus/ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+          </FIBEX-ELEMENTS>
+          <MAPPINGS>
+            <SYSTEM-MAPPING>
+              <SHORT-NAME>SystemMapping</SHORT-NAME>
+              <APPLICATION-PARTITION-TO-ECU-PARTITION-MAPPINGS>
+                <APPLICATION-PARTITION-TO-ECU-PARTITION-MAPPING>
+                  <SHORT-NAME>AppPartVehSpd_EcuPartVehSpd</SHORT-NAME>
+                  <APPLICATION-PARTITION-REFS>
+                    <APPLICATION-PARTITION-REF DEST="APPLICATION-PARTITION">/Systems/AppPartVehSpd</APPLICATION-PARTITION-REF>
+                  </APPLICATION-PARTITION-REFS>
+                  <ECU-PARTITION-REF DEST="ECU-PARTITION">/EcuInstances/VehicleSpeed/EcuPartVehSpd</ECU-PARTITION-REF>
+                </APPLICATION-PARTITION-TO-ECU-PARTITION-MAPPING>
+              </APPLICATION-PARTITION-TO-ECU-PARTITION-MAPPINGS>
+              <DATA-MAPPINGS>
+                <SENDER-RECEIVER-TO-SIGNAL-MAPPING>
+                  <DATA-ELEMENT-IREF>
+                    <CONTEXT-COMPOSITION-REF DEST="ROOT-SW-COMPOSITION-PROTOTYPE">/Systems/PF_System/RootSwCompositionPrototype</CONTEXT-COMPOSITION-REF>
+                    <CONTEXT-PORT-REF DEST="R-PORT-PROTOTYPE">/System/TopLevelComposition/WhlSpdConsoldInp</CONTEXT-PORT-REF>
+                    <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1/RoadWhlAgSpd</TARGET-DATA-PROTOTYPE-REF>
+                  </DATA-ELEMENT-IREF>
+                  <SYSTEM-SIGNAL-REF DEST="SYSTEM-SIGNAL">/Pkg_System_Cfg/Pkg_Signal/SysSig_EcuVehSpd_RoadWhlAgSpd_Rx</SYSTEM-SIGNAL-REF>
+                </SENDER-RECEIVER-TO-SIGNAL-MAPPING>
+              </DATA-MAPPINGS>
+              <SW-MAPPINGS>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>SWcToECUMapping_VehSpd</SHORT-NAME>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <CONTEXT-COMPOSITION-REF DEST="ROOT-SW-COMPOSITION-PROTOTYPE">/Systems/PF_System/RootSwCompositionPrototype</CONTEXT-COMPOSITION-REF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/System/TopLevelComposition/CPT_VehicleSpeedComposition</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <CONTROLLED-HW-ELEMENT-REF DEST="HW-ELEMENT">/EcuVehicleSpeed/VehicleSpeed</CONTROLLED-HW-ELEMENT-REF>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/EcuInstances/VehicleSpeed</ECU-INSTANCE-REF>
+                  <PROCESSING-UNIT-REF DEST="HW-ELEMENT">/EcuVehicleSpeed/VehicleSpeed</PROCESSING-UNIT-REF>
+                </SWC-TO-ECU-MAPPING>
+              </SW-MAPPINGS>
+              <SWC-TO-APPLICATION-PARTITION-MAPPINGS>
+                <SWC-TO-APPLICATION-PARTITION-MAPPING>
+                  <SHORT-NAME>SwcToApplicationPartition_AppPartVehSpd</SHORT-NAME>
+                  <APPLICATION-PARTITION-REF DEST="APPLICATION-PARTITION">/Systems/AppPartVehSpd</APPLICATION-PARTITION-REF>
+                  <SW-COMPONENT-PROTOTYPE-IREF>
+                    <CONTEXT-COMPOSITION-REF DEST="ROOT-SW-COMPOSITION-PROTOTYPE">/Systems/PF_System/RootSwCompositionPrototype</CONTEXT-COMPOSITION-REF>
+                    <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/System/TopLevelComposition/CPT_VehicleSpeedComposition</TARGET-COMPONENT-REF>
+                  </SW-COMPONENT-PROTOTYPE-IREF>
+                </SWC-TO-APPLICATION-PARTITION-MAPPING>
+              </SWC-TO-APPLICATION-PARTITION-MAPPINGS>
+            </SYSTEM-MAPPING>
+          </MAPPINGS>
+          <ROOT-SOFTWARE-COMPOSITIONS>
+            <ROOT-SW-COMPOSITION-PROTOTYPE>
+              <SHORT-NAME>RootSwCompositionPrototype</SHORT-NAME>
+              <SOFTWARE-COMPOSITION-TREF DEST="COMPOSITION-SW-COMPONENT-TYPE">/System/TopLevelComposition</SOFTWARE-COMPOSITION-TREF>
+            </ROOT-SW-COMPOSITION-PROTOTYPE>
+          </ROOT-SOFTWARE-COMPOSITIONS>
+          <SYSTEM-VERSION>1.0.0</SYSTEM-VERSION>
+        </SYSTEM>
+        <APPLICATION-PARTITION>
+          <SHORT-NAME>AppPartVehSpd</SHORT-NAME>
+        </APPLICATION-PARTITION>
+      </ELEMENTS>
+    </AR-PACKAGE>
+  </AR-PACKAGES>
+</AUTOSAR>

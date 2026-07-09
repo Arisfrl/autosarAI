@@ -1,0 +1,1 @@
+This zip file contains all deployment related artefacts of the Workflow Example. The delivered files use the AUTOSAR_00054.xsd schema version (R25-11).

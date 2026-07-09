@@ -1,0 +1,641 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_00054.xsd">
+  <!-- AUTOSAR Workflow Example -->
+  <!--
+
+
+-WORK IN PROGRESS-
+
+Document Owner:                 AUTOSAR
+Document Responsibility:        AUTOSAR
+Document Identification Number: 1145
+Document Status:                Draft
+Part of AUTOSAR Standard:       Classic
+Part of AUTOSAR Release:        R25-11
+-->
+  <!--
+Disclaimer
+
+This work (specification and/or software implementation) and the material
+contained in it, as released by AUTOSAR, is for the purpose of information
+only. AUTOSAR and the companies that have contributed to it shall not be liable
+for any use of the work.
+
+The material contained in this work is protected by copyright and other types
+of intellectual property rights. The commercial exploitation of the material
+contained in this work requires a license to such intellectual property rights.
+
+This work may be utilized or reproduced without any modification, in any form
+or by any means, for informational purposes only. For any other purpose, no
+part of the work may be utilized or reproduced, in any form or by any means,
+without permission in writing from the publisher.
+
+The work has been developed for automotive applications only. It has neither
+been developed, nor tested for non-automotive applications.
+
+The word AUTOSAR and the AUTOSAR logo are registered trademarks.
+
+-->
+  <AR-PACKAGES>
+    <AR-PACKAGE>
+      <SHORT-NAME>System</SHORT-NAME>
+      <ELEMENTS>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>TopLevelComposition</SHORT-NAME>
+          <PORTS>
+            <R-PORT-PROTOTYPE>
+              <SHORT-NAME>WhlSpdConsoldInp</SHORT-NAME>
+              <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1</REQUIRED-INTERFACE-TREF>
+            </R-PORT-PROTOTYPE>
+            <P-PORT-PROTOTYPE>
+              <SHORT-NAME>WhlSpdConsoldOutp</SHORT-NAME>
+              <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1</PROVIDED-INTERFACE-TREF>
+            </P-PORT-PROTOTYPE>
+          </PORTS>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_VehicleSpeedComposition</SHORT-NAME>
+              <TYPE-TREF DEST="COMPOSITION-SW-COMPONENT-TYPE">/SwComponentTypes/VehicleSpeedComposition</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_WheelSpeedComposition</SHORT-NAME>
+              <TYPE-TREF DEST="COMPOSITION-SW-COMPONENT-TYPE">/SwComponentTypes/WheelSpeedComposition</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+          <CONNECTORS>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>ASC_CPT_WheelSpeedComposition_RoadWhlAgSpd_CPT_VehicleSpeedComposition_RoadWhlAgSpd</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/System/TopLevelComposition/CPT_WheelSpeedComposition</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/WheelSpeedComposition/WhlSpdConsoldOutp</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/System/TopLevelComposition/CPT_VehicleSpeedComposition</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/WhlSpdConsoldInp</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <DELEGATION-SW-CONNECTOR>
+              <SHORT-NAME>DSC_CPT_WheelSpeedComposition_WhlSpdConsoldOutp_WhlSpdConsoldOutp</SHORT-NAME>
+              <INNER-PORT-IREF>
+                <P-PORT-IN-COMPOSITION-INSTANCE-REF>
+                  <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/System/TopLevelComposition/CPT_WheelSpeedComposition</CONTEXT-COMPONENT-REF>
+                  <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/WheelSpeedComposition/WhlSpdConsoldOutp</TARGET-P-PORT-REF>
+                </P-PORT-IN-COMPOSITION-INSTANCE-REF>
+              </INNER-PORT-IREF>
+              <OUTER-PORT-REF DEST="P-PORT-PROTOTYPE">/System/TopLevelComposition/WhlSpdConsoldOutp</OUTER-PORT-REF>
+            </DELEGATION-SW-CONNECTOR>
+            <DELEGATION-SW-CONNECTOR>
+              <SHORT-NAME>DSC_CPT_VehicleSpeedComposition_WhlSpdConsoldInp_WhlSpdConsoldInp</SHORT-NAME>
+              <INNER-PORT-IREF>
+                <R-PORT-IN-COMPOSITION-INSTANCE-REF>
+                  <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/System/TopLevelComposition/CPT_VehicleSpeedComposition</CONTEXT-COMPONENT-REF>
+                  <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/WhlSpdConsoldInp</TARGET-R-PORT-REF>
+                </R-PORT-IN-COMPOSITION-INSTANCE-REF>
+              </INNER-PORT-IREF>
+              <OUTER-PORT-REF DEST="R-PORT-PROTOTYPE">/System/TopLevelComposition/WhlSpdConsoldInp</OUTER-PORT-REF>
+            </DELEGATION-SW-CONNECTOR>
+          </CONNECTORS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>Systems</SHORT-NAME>
+      <ADMIN-DATA>
+        <SDGS>
+          <SDG GID="_conversion">
+            <SDG GID="APPLICATION-PARTITION">
+              <SDG GID="SHORT-NAME">
+                <SD GID="_mixed">AppPartVehSpd</SD>
+              </SDG>
+              <SD GID="_mixed"/>
+            </SDG>
+            <SD GID="_path">APPLICATION-PARTITION@1/ELEMENTS@2</SD>
+            <SD GID="_target">org.artop.aal.autosar430</SD>
+          </SDG>
+          <SDG GID="_conversion">
+            <SDG GID="APPLICATION-PARTITION">
+              <SDG GID="SHORT-NAME">
+                <SD GID="_mixed">AppPartWhlSpd</SD>
+              </SDG>
+              <SD GID="_mixed"/>
+            </SDG>
+            <SD GID="_path">APPLICATION-PARTITION@2/ELEMENTS@2</SD>
+            <SD GID="_target">org.artop.aal.autosar430</SD>
+          </SDG>
+        </SDGS>
+      </ADMIN-DATA>
+      <ELEMENTS>
+        <SYSTEM>
+          <SHORT-NAME>PF_System</SHORT-NAME>
+          <CATEGORY>SYSTEM_DESCRIPTION</CATEGORY>
+          <ECU-EXTRACT-VERSION>1.0.0</ECU-EXTRACT-VERSION>
+          <FIBEX-ELEMENTS>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="CAN-CLUSTER">/CommunicationClusters/CanCluster</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="CAN-FRAME">/Pkg_System_Cfg/Pkg_Frame/CanFrame_EcuVehSpd_RoadWhlAgSpd_Rx</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="CAN-FRAME">/Pkg_System_Cfg/Pkg_Frame/CanFrame_EcuWhlSpd_RoadWhlAgSpd_Tx</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="I-SIGNAL">/Pkg_System_Cfg/Pkg_ISignal/ISig_EcuVehSpd_RoadWhlAgSpd_Rx</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="I-SIGNAL">/Pkg_System_Cfg/Pkg_ISignal/ISig_EcuWhlSpd_RoadWhlAgSpd_Tx</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="I-SIGNAL-I-PDU">/Pkg_System_Cfg/Pkg_Pdus/ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="I-SIGNAL-I-PDU">/Pkg_System_Cfg/Pkg_Pdus/ISIPdu_EcuWhlSpd_RoadWhlAgSpd_Tx</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="ECU-INSTANCE">/EcuInstances/VehicleSpeed</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+            <FIBEX-ELEMENT-REF-CONDITIONAL>
+              <FIBEX-ELEMENT-REF DEST="ECU-INSTANCE">/EcuInstances/WheelSpeed</FIBEX-ELEMENT-REF>
+            </FIBEX-ELEMENT-REF-CONDITIONAL>
+          </FIBEX-ELEMENTS>
+          <MAPPINGS>
+            <SYSTEM-MAPPING>
+              <SHORT-NAME>SystemMapping</SHORT-NAME>
+              <ADMIN-DATA>
+                <SDGS>
+                  <SDG GID="_conversion">
+                    <SDG GID="APPLICATION-PARTITION-TO-ECU-PARTITION-MAPPINGS">
+                      <SDG GID="APPLICATION-PARTITION-TO-ECU-PARTITION-MAPPING">
+                        <SDG GID="SHORT-NAME">
+                          <SD GID="_mixed">AppPartVehSpd_EcuPartVehSpd</SD>
+                        </SDG>
+                        <SDG GID="APPLICATION-PARTITION-REFS">
+                          <SDG GID="APPLICATION-PARTITION-REF">
+                            <SD GID="_mixed">/Systems/AppPartVehSpd</SD>
+                            <SD GID="DEST">APPLICATION-PARTITION</SD>
+                          </SDG>
+                          <SD GID="_mixed"/>
+                        </SDG>
+                        <SDG GID="ECU-PARTITION-REF">
+                          <SD GID="_mixed">/EcuInstances/VehicleSpeed/EcuPartVehSpd</SD>
+                          <SD GID="DEST">ECU-PARTITION</SD>
+                        </SDG>
+                        <SD GID="_mixed"/>
+                      </SDG>
+                      <SDG GID="APPLICATION-PARTITION-TO-ECU-PARTITION-MAPPING">
+                        <SDG GID="SHORT-NAME">
+                          <SD GID="_mixed">AppPartWhlSpd_EcuPartWhlSpd</SD>
+                        </SDG>
+                        <SDG GID="APPLICATION-PARTITION-REFS">
+                          <SDG GID="APPLICATION-PARTITION-REF">
+                            <SD GID="_mixed">/Systems/AppPartWhlSpd</SD>
+                            <SD GID="DEST">APPLICATION-PARTITION</SD>
+                          </SDG>
+                          <SD GID="_mixed"/>
+                        </SDG>
+                        <SDG GID="ECU-PARTITION-REF">
+                          <SD GID="_mixed">/EcuInstances/WheelSpeed/EcuPartWhlSpd</SD>
+                          <SD GID="DEST">ECU-PARTITION</SD>
+                        </SDG>
+                        <SD GID="_mixed"/>
+                      </SDG>
+                      <SD GID="_mixed"/>
+                    </SDG>
+                    <SD GID="_path">APPLICATION-PARTITION-TO-ECU-PARTITION-MAPPINGS@2/</SD>
+                    <SD GID="_target">org.artop.aal.autosar430</SD>
+                  </SDG>
+                  <SDG GID="_conversion">
+                    <SDG GID="SWC-TO-APPLICATION-PARTITION-MAPPINGS">
+                      <SDG GID="SWC-TO-APPLICATION-PARTITION-MAPPING">
+                        <SDG GID="SHORT-NAME">
+                          <SD GID="_mixed">SwcToApplicationPartition_AppPartVehSpd</SD>
+                        </SDG>
+                        <SDG GID="APPLICATION-PARTITION-REF">
+                          <SD GID="_mixed">/Systems/AppPartVehSpd</SD>
+                          <SD GID="DEST">APPLICATION-PARTITION</SD>
+                        </SDG>
+                        <SDG GID="SW-COMPONENT-PROTOTYPE-IREF">
+                          <SDG GID="CONTEXT-COMPOSITION-REF">
+                            <SD GID="_mixed">/Systems/PF_System/RootSwCompositionPrototype</SD>
+                            <SD GID="DEST">ROOT-SW-COMPOSITION-PROTOTYPE</SD>
+                          </SDG>
+                          <SDG GID="TARGET-COMPONENT-REF">
+                            <SD GID="_mixed">/System/TopLevelComposition/CPT_VehicleSpeedComposition</SD>
+                            <SD GID="DEST">SW-COMPONENT-PROTOTYPE</SD>
+                          </SDG>
+                          <SD GID="_mixed"/>
+                        </SDG>
+                        <SD GID="_mixed"/>
+                      </SDG>
+                      <SDG GID="SWC-TO-APPLICATION-PARTITION-MAPPING">
+                        <SDG GID="SHORT-NAME">
+                          <SD GID="_mixed">SwcToApplicationPartition_AppPartWhlSpd</SD>
+                        </SDG>
+                        <SDG GID="APPLICATION-PARTITION-REF">
+                          <SD GID="_mixed">/Systems/AppPartWhlSpd</SD>
+                          <SD GID="DEST">APPLICATION-PARTITION</SD>
+                        </SDG>
+                        <SDG GID="SW-COMPONENT-PROTOTYPE-IREF">
+                          <SDG GID="CONTEXT-COMPOSITION-REF">
+                            <SD GID="_mixed">/Systems/PF_System/RootSwCompositionPrototype</SD>
+                            <SD GID="DEST">ROOT-SW-COMPOSITION-PROTOTYPE</SD>
+                          </SDG>
+                          <SDG GID="TARGET-COMPONENT-REF">
+                            <SD GID="_mixed">/System/TopLevelComposition/CPT_WheelSpeedComposition</SD>
+                            <SD GID="DEST">SW-COMPONENT-PROTOTYPE</SD>
+                          </SDG>
+                          <SD GID="_mixed"/>
+                        </SDG>
+                        <SD GID="_mixed"/>
+                      </SDG>
+                      <SD GID="_mixed"/>
+                    </SDG>
+                    <SD GID="_path">SWC-TO-APPLICATION-PARTITION-MAPPINGS@5/</SD>
+                    <SD GID="_target">org.artop.aal.autosar430</SD>
+                  </SDG>
+                </SDGS>
+              </ADMIN-DATA>
+              <DATA-MAPPINGS>
+                <SENDER-RECEIVER-TO-SIGNAL-MAPPING>
+                  <DATA-ELEMENT-IREF>
+                    <CONTEXT-COMPOSITION-REF DEST="ROOT-SW-COMPOSITION-PROTOTYPE">/Systems/PF_System/RootSwCompositionPrototype</CONTEXT-COMPOSITION-REF>
+                    <CONTEXT-PORT-REF DEST="R-PORT-PROTOTYPE">/System/TopLevelComposition/WhlSpdConsoldInp</CONTEXT-PORT-REF>
+                    <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1/RoadWhlAgSpd</TARGET-DATA-PROTOTYPE-REF>
+                  </DATA-ELEMENT-IREF>
+                  <SYSTEM-SIGNAL-REF DEST="SYSTEM-SIGNAL">/Pkg_System_Cfg/Pkg_Signal/SysSig_EcuVehSpd_RoadWhlAgSpd_Rx</SYSTEM-SIGNAL-REF>
+                </SENDER-RECEIVER-TO-SIGNAL-MAPPING>
+                <SENDER-RECEIVER-TO-SIGNAL-MAPPING>
+                  <DATA-ELEMENT-IREF>
+                    <CONTEXT-COMPOSITION-REF DEST="ROOT-SW-COMPOSITION-PROTOTYPE">/Systems/PF_System/RootSwCompositionPrototype</CONTEXT-COMPOSITION-REF>
+                    <CONTEXT-PORT-REF DEST="P-PORT-PROTOTYPE">/System/TopLevelComposition/WhlSpdConsoldOutp</CONTEXT-PORT-REF>
+                    <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1/RoadWhlAgSpd</TARGET-DATA-PROTOTYPE-REF>
+                  </DATA-ELEMENT-IREF>
+                  <SYSTEM-SIGNAL-REF DEST="SYSTEM-SIGNAL">/Pkg_System_Cfg/Pkg_Signal/SysSig_EcuWhlSpd_RoadWhlAgSpd_Tx</SYSTEM-SIGNAL-REF>
+                </SENDER-RECEIVER-TO-SIGNAL-MAPPING>
+              </DATA-MAPPINGS>
+              <SW-MAPPINGS>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>SWcToECUMapping_VehSpd</SHORT-NAME>
+                  <ADMIN-DATA>
+                    <SDGS>
+                      <SDG GID="_conversion">
+                        <SDG GID="CONTROLLED-HW-ELEMENT-REF">
+                          <SD GID="_mixed">/EcuVehicleSpeed/VehicleSpeed</SD>
+                          <SD GID="DEST">HW-ELEMENT</SD>
+                        </SDG>
+                        <SD GID="_path">CONTROLLED-HW-ELEMENT-REF@3/</SD>
+                        <SD GID="_target">org.artop.aal.autosar403</SD>
+                      </SDG>
+                    </SDGS>
+                  </ADMIN-DATA>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <CONTEXT-COMPOSITION-REF DEST="ROOT-SW-COMPOSITION-PROTOTYPE">/Systems/PF_System/RootSwCompositionPrototype</CONTEXT-COMPOSITION-REF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/System/TopLevelComposition/CPT_VehicleSpeedComposition</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/EcuInstances/VehicleSpeed</ECU-INSTANCE-REF>
+                  <PROCESSING-UNIT-REF DEST="HW-ELEMENT">/EcuVehicleSpeed/VehicleSpeed</PROCESSING-UNIT-REF>
+                </SWC-TO-ECU-MAPPING>
+                <SWC-TO-ECU-MAPPING>
+                  <SHORT-NAME>SWcToECUMapping_WhlSpd</SHORT-NAME>
+                  <ADMIN-DATA>
+                    <SDGS>
+                      <SDG GID="_conversion">
+                        <SDG GID="CONTROLLED-HW-ELEMENT-REF">
+                          <SD GID="_mixed">/EcuWheelSpeed/WheelSpeed</SD>
+                          <SD GID="DEST">HW-ELEMENT</SD>
+                        </SDG>
+                        <SD GID="_path">CONTROLLED-HW-ELEMENT-REF@3/</SD>
+                        <SD GID="_target">org.artop.aal.autosar403</SD>
+                      </SDG>
+                    </SDGS>
+                  </ADMIN-DATA>
+                  <COMPONENT-IREFS>
+                    <COMPONENT-IREF>
+                      <CONTEXT-COMPOSITION-REF DEST="ROOT-SW-COMPOSITION-PROTOTYPE">/Systems/PF_System/RootSwCompositionPrototype</CONTEXT-COMPOSITION-REF>
+                      <TARGET-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/System/TopLevelComposition/CPT_WheelSpeedComposition</TARGET-COMPONENT-REF>
+                    </COMPONENT-IREF>
+                  </COMPONENT-IREFS>
+                  <ECU-INSTANCE-REF DEST="ECU-INSTANCE">/EcuInstances/WheelSpeed</ECU-INSTANCE-REF>
+                  <PROCESSING-UNIT-REF DEST="HW-ELEMENT">/EcuWheelSpeed/WheelSpeed</PROCESSING-UNIT-REF>
+                </SWC-TO-ECU-MAPPING>
+              </SW-MAPPINGS>
+            </SYSTEM-MAPPING>
+          </MAPPINGS>
+          <ROOT-SOFTWARE-COMPOSITIONS>
+            <ROOT-SW-COMPOSITION-PROTOTYPE>
+              <SHORT-NAME>RootSwCompositionPrototype</SHORT-NAME>
+              <SOFTWARE-COMPOSITION-TREF DEST="COMPOSITION-SW-COMPONENT-TYPE">/System/TopLevelComposition</SOFTWARE-COMPOSITION-TREF>
+            </ROOT-SW-COMPOSITION-PROTOTYPE>
+          </ROOT-SOFTWARE-COMPOSITIONS>
+          <SYSTEM-VERSION>1.0.0</SYSTEM-VERSION>
+        </SYSTEM>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>SwComponentTypes</SHORT-NAME>
+      <ELEMENTS>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>WheelSpeedComposition</SHORT-NAME>
+          <PORTS>
+            <P-PORT-PROTOTYPE>
+              <SHORT-NAME>WhlSpdConsoldOutp</SHORT-NAME>
+              <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1</PROVIDED-INTERFACE-TREF>
+            </P-PORT-PROTOTYPE>
+          </PORTS>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_WhlSpdSnsr</SHORT-NAME>
+              <TYPE-TREF DEST="SENSOR-ACTUATOR-SW-COMPONENT-TYPE">/SwComponentTypes/WhlSpdSnsr</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_WhlSpdVirt</SHORT-NAME>
+              <TYPE-TREF DEST="ECU-ABSTRACTION-SW-COMPONENT-TYPE">/SwComponentTypes/WhlSpdVirt</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+          <CONNECTORS>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>ASC_CPT_WhlSpdVirt_WhlSpdMeasdOutp_CPT_WhlSpdSnsr_WhlSpdMeasdInp</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/WheelSpeedComposition/CPT_WhlSpdVirt</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/WhlSpdVirt/WhlSpdMeasdOutp</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/WheelSpeedComposition/CPT_WhlSpdSnsr</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/WhlSpdSnsr/WhlSpdMeasdInp</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <DELEGATION-SW-CONNECTOR>
+              <SHORT-NAME>DSC_CPT_WhlSpdSnsr_WhlSpdConsoldOutp_WhlSpdConsoldOutp</SHORT-NAME>
+              <INNER-PORT-IREF>
+                <P-PORT-IN-COMPOSITION-INSTANCE-REF>
+                  <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/WheelSpeedComposition/CPT_WhlSpdSnsr</CONTEXT-COMPONENT-REF>
+                  <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/WhlSpdSnsr/WhlSpdConsoldOutp</TARGET-P-PORT-REF>
+                </P-PORT-IN-COMPOSITION-INSTANCE-REF>
+              </INNER-PORT-IREF>
+              <OUTER-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/WheelSpeedComposition/WhlSpdConsoldOutp</OUTER-PORT-REF>
+            </DELEGATION-SW-CONNECTOR>
+          </CONNECTORS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+        <COMPOSITION-SW-COMPONENT-TYPE>
+          <SHORT-NAME>VehicleSpeedComposition</SHORT-NAME>
+          <PORTS>
+            <R-PORT-PROTOTYPE>
+              <SHORT-NAME>WhlSpdConsoldInp</SHORT-NAME>
+              <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/AUTOSAR_AISpecification/PortInterfaces/RoadWhlAgSpd1</REQUIRED-INTERFACE-TREF>
+            </R-PORT-PROTOTYPE>
+          </PORTS>
+          <COMPONENTS>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_VehSpdCalc</SHORT-NAME>
+              <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/SwComponentTypes/VehSpdCalc</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_VehSpdActr</SHORT-NAME>
+              <TYPE-TREF DEST="SENSOR-ACTUATOR-SW-COMPONENT-TYPE">/SwComponentTypes/VehSpdActr</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+            <SW-COMPONENT-PROTOTYPE>
+              <SHORT-NAME>CPT_VehSpdVirt</SHORT-NAME>
+              <TYPE-TREF DEST="ECU-ABSTRACTION-SW-COMPONENT-TYPE">/SwComponentTypes/VehSpdVirt</TYPE-TREF>
+            </SW-COMPONENT-PROTOTYPE>
+          </COMPONENTS>
+          <CONNECTORS>
+            <DELEGATION-SW-CONNECTOR>
+              <SHORT-NAME>DSC_CPT_VehSpdCalc_WhlSpdConsoldInp_WhlSpdConsoldInp</SHORT-NAME>
+              <INNER-PORT-IREF>
+                <R-PORT-IN-COMPOSITION-INSTANCE-REF>
+                  <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdCalc</CONTEXT-COMPONENT-REF>
+                  <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdCalc/WhlSpdConsoldInp</TARGET-R-PORT-REF>
+                </R-PORT-IN-COMPOSITION-INSTANCE-REF>
+              </INNER-PORT-IREF>
+              <OUTER-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/WhlSpdConsoldInp</OUTER-PORT-REF>
+            </DELEGATION-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>ASC_CPT_VehSpdActr_Led0CmdOutp_CPT_VehSpdVirt_Led0CmdInp</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdActr</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/Led0CmdOutp</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdVirt</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdVirt/Led0CmdInp</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>ASC_CPT_VehSpdActr_Led1CmdOutp_CPT_VehSpdVirt_Led1CmdInp</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdActr</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/Led1CmdOutp</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdVirt</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdVirt/Led1CmdInp</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+            <ASSEMBLY-SW-CONNECTOR>
+              <SHORT-NAME>ASC_CPT_VehSpdCalc_VehSpdOutp_CPT_VehSpdActr_VehSpdInp</SHORT-NAME>
+              <PROVIDER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdCalc</CONTEXT-COMPONENT-REF>
+                <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/SwComponentTypes/VehSpdCalc/VehSpdOutp</TARGET-P-PORT-REF>
+              </PROVIDER-IREF>
+              <REQUESTER-IREF>
+                <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/SwComponentTypes/VehicleSpeedComposition/CPT_VehSpdActr</CONTEXT-COMPONENT-REF>
+                <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/SwComponentTypes/VehSpdActr/VehSpdInp</TARGET-R-PORT-REF>
+              </REQUESTER-IREF>
+            </ASSEMBLY-SW-CONNECTOR>
+          </CONNECTORS>
+        </COMPOSITION-SW-COMPONENT-TYPE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+    <AR-PACKAGE>
+      <SHORT-NAME>CommunicationClusters</SHORT-NAME>
+      <ELEMENTS>
+        <CAN-CLUSTER>
+          <SHORT-NAME>CanCluster</SHORT-NAME>
+          <ADMIN-DATA>
+            <SDGS>
+              <SDG GID="_conversion">
+                <SDG GID="BAUDRATE">
+                  <SD GID="_mixed">500000</SD>
+                </SDG>
+                <SD GID="_path">BAUDRATE@0/CAN-CLUSTER-CONDITIONAL/CAN-CLUSTER-VARIANTS@2</SD>
+                <SD GID="_target">org.artop.aal.autosar411</SD>
+              </SDG>
+            </SDGS>
+          </ADMIN-DATA>
+          <CAN-CLUSTER-VARIANTS>
+            <CAN-CLUSTER-CONDITIONAL>
+              <PHYSICAL-CHANNELS>
+                <CAN-PHYSICAL-CHANNEL>
+                  <SHORT-NAME>CanPhysicalChannel</SHORT-NAME>
+                  <ADMIN-DATA>
+                    <SDGS>
+                      <SDG GID="_conversion">
+                        <SDG GID="PDU-TRIGGERINGS">
+                          <SDG GID="PDU-TRIGGERING">
+                            <SDG GID="SHORT-NAME">
+                              <SD GID="_mixed">PduTrig_EcuWhlSpd_RoadWhlAgSpd_Tx</SD>
+                            </SDG>
+                            <SDG GID="I-PDU-PORT-REFS">
+                              <SDG GID="I-PDU-PORT-REF">
+                                <SD GID="_mixed">/EcuInstances/WheelSpeed/WhlSpd_CanConnector/ISIPdu_EcuWhlSpd_RoadWhlAgSpd_Tx_WheelSpeed_OUT</SD>
+                                <SD GID="DEST">I-PDU-PORT</SD>
+                              </SDG>
+                              <SD GID="_mixed"/>
+                            </SDG>
+                            <SDG GID="I-PDU-REF">
+                              <SD GID="_mixed">/Pkg_System_Cfg/Pkg_Pdus/ISIPdu_EcuWhlSpd_RoadWhlAgSpd_Tx</SD>
+                              <SD GID="DEST">I-SIGNAL-I-PDU</SD>
+                            </SDG>
+                            <SDG GID="I-SIGNAL-TRIGGERINGS">
+                              <SDG GID="I-SIGNAL-TRIGGERING-REF-CONDITIONAL">
+                                <SDG GID="I-SIGNAL-TRIGGERING-REF">
+                                  <SD GID="_mixed">/CommunicationClusters/CanCluster/CanPhysicalChannel/ISignalTrig_EcuWhlSpd_RoadWhlAgSpd_Tx</SD>
+                                  <SD GID="DEST">I-SIGNAL-TRIGGERING</SD>
+                                </SDG>
+                                <SD GID="_mixed"/>
+                              </SDG>
+                              <SD GID="_mixed"/>
+                            </SDG>
+                            <SD GID="_mixed"/>
+                          </SDG>
+                          <SDG GID="PDU-TRIGGERING">
+                            <SDG GID="SHORT-NAME">
+                              <SD GID="_mixed">PduTrig_EcuVehSpd_RoadWhlAgSpd_Rx</SD>
+                            </SDG>
+                            <SDG GID="I-PDU-PORT-REFS">
+                              <SDG GID="I-PDU-PORT-REF">
+                                <SD GID="_mixed">/EcuInstances/VehicleSpeed/VehSpd_CanConnector/ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</SD>
+                                <SD GID="DEST">I-PDU-PORT</SD>
+                              </SDG>
+                              <SD GID="_mixed"/>
+                            </SDG>
+                            <SDG GID="I-PDU-REF">
+                              <SD GID="_mixed">/Pkg_System_Cfg/Pkg_Pdus/ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx</SD>
+                              <SD GID="DEST">I-SIGNAL-I-PDU</SD>
+                            </SDG>
+                            <SDG GID="I-SIGNAL-TRIGGERINGS">
+                              <SDG GID="I-SIGNAL-TRIGGERING-REF-CONDITIONAL">
+                                <SDG GID="I-SIGNAL-TRIGGERING-REF">
+                                  <SD GID="_mixed">/CommunicationClusters/CanCluster/CanPhysicalChannel/ISignalTrig_EcuVehSpd_RoadWhlAgSpd_Rx</SD>
+                                  <SD GID="DEST">I-SIGNAL-TRIGGERING</SD>
+                                </SDG>
+                                <SD GID="_mixed"/>
+                              </SDG>
+                              <SD GID="_mixed"/>
+                            </SDG>
+                            <SD GID="_mixed"/>
+                          </SDG>
+                          <SD GID="_mixed"/>
+                        </SDG>
+                        <SD GID="_path">PDU-TRIGGERINGS@5/</SD>
+                        <SD GID="_target">org.artop.aal.autosar402</SD>
+                      </SDG>
+                    </SDGS>
+                  </ADMIN-DATA>
+                  <COMM-CONNECTORS>
+                    <COMMUNICATION-CONNECTOR-REF-CONDITIONAL>
+                      <COMMUNICATION-CONNECTOR-REF DEST="CAN-COMMUNICATION-CONNECTOR">/EcuInstances/WheelSpeed/WhlSpd_CanConnector</COMMUNICATION-CONNECTOR-REF>
+                    </COMMUNICATION-CONNECTOR-REF-CONDITIONAL>
+                    <COMMUNICATION-CONNECTOR-REF-CONDITIONAL>
+                      <COMMUNICATION-CONNECTOR-REF DEST="CAN-COMMUNICATION-CONNECTOR">/EcuInstances/VehicleSpeed/VehSpd_CanConnector</COMMUNICATION-CONNECTOR-REF>
+                    </COMMUNICATION-CONNECTOR-REF-CONDITIONAL>
+                  </COMM-CONNECTORS>
+                  <FRAME-TRIGGERINGS>
+                    <CAN-FRAME-TRIGGERING>
+                      <SHORT-NAME>CanFrameTrig_EcuWhlSpd_RoadWhlAgSpd_Tx</SHORT-NAME>
+                      <ADMIN-DATA>
+                        <SDGS>
+                          <SDG GID="_conversion">
+                            <SDG GID="PDU-TRIGGERINGS">
+                              <SDG GID="PDU-TRIGGERING-REF-CONDITIONAL">
+                                <SDG GID="PDU-TRIGGERING-REF">
+                                  <SD GID="_mixed">/CommunicationClusters/CanCluster/CanPhysicalChannel/PduTrig_EcuWhlSpd_RoadWhlAgSpd_Tx</SD>
+                                  <SD GID="DEST">PDU-TRIGGERING</SD>
+                                </SDG>
+                                <SD GID="_mixed"/>
+                              </SDG>
+                              <SD GID="_mixed"/>
+                            </SDG>
+                            <SD GID="_path">PDU-TRIGGERINGS@4/</SD>
+                            <SD GID="_target">org.artop.aal.autosar402</SD>
+                          </SDG>
+                          <SDG GID="_conversion">
+                            <SDG GID="CAN-FRAME-TX-BEHAVIOR">
+                              <SD GID="_mixed">CAN-20</SD>
+                            </SDG>
+                            <SD GID="_path">CAN-FRAME-TX-BEHAVIOR@6/</SD>
+                            <SD GID="_target">org.artop.aal.autosar422</SD>
+                          </SDG>
+                        </SDGS>
+                      </ADMIN-DATA>
+                      <FRAME-PORT-REFS>
+                        <FRAME-PORT-REF DEST="FRAME-PORT">/EcuInstances/WheelSpeed/WhlSpd_CanConnector/CanFrame_EcuWhlSpd_RoadWhlAgSpd_Tx_WheelSpeed_OUT</FRAME-PORT-REF>
+                      </FRAME-PORT-REFS>
+                      <FRAME-REF DEST="CAN-FRAME">/Pkg_System_Cfg/Pkg_Frame/CanFrame_EcuWhlSpd_RoadWhlAgSpd_Tx</FRAME-REF>
+                      <CAN-ADDRESSING-MODE>STANDARD</CAN-ADDRESSING-MODE>
+                      <IDENTIFIER>256</IDENTIFIER>
+                    </CAN-FRAME-TRIGGERING>
+                    <CAN-FRAME-TRIGGERING>
+                      <SHORT-NAME>CanFrameTrig_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+                      <ADMIN-DATA>
+                        <SDGS>
+                          <SDG GID="_conversion">
+                            <SDG GID="PDU-TRIGGERINGS">
+                              <SDG GID="PDU-TRIGGERING-REF-CONDITIONAL">
+                                <SDG GID="PDU-TRIGGERING-REF">
+                                  <SD GID="_mixed">/CommunicationClusters/CanCluster/CanPhysicalChannel/PduTrig_EcuVehSpd_RoadWhlAgSpd_Rx</SD>
+                                  <SD GID="DEST">PDU-TRIGGERING</SD>
+                                </SDG>
+                                <SD GID="_mixed"/>
+                              </SDG>
+                              <SD GID="_mixed"/>
+                            </SDG>
+                            <SD GID="_path">PDU-TRIGGERINGS@4/</SD>
+                            <SD GID="_target">org.artop.aal.autosar402</SD>
+                          </SDG>
+                          <SDG GID="_conversion">
+                            <SDG GID="CAN-FRAME-RX-BEHAVIOR">
+                              <SD GID="_mixed">CAN-20</SD>
+                            </SDG>
+                            <SD GID="_path">CAN-FRAME-RX-BEHAVIOR@6/</SD>
+                            <SD GID="_target">org.artop.aal.autosar422</SD>
+                          </SDG>
+                        </SDGS>
+                      </ADMIN-DATA>
+                      <FRAME-PORT-REFS>
+                        <FRAME-PORT-REF DEST="FRAME-PORT">/EcuInstances/VehicleSpeed/VehSpd_CanConnector/CanFrame_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</FRAME-PORT-REF>
+                      </FRAME-PORT-REFS>
+                      <FRAME-REF DEST="CAN-FRAME">/Pkg_System_Cfg/Pkg_Frame/CanFrame_EcuVehSpd_RoadWhlAgSpd_Rx</FRAME-REF>
+                      <CAN-ADDRESSING-MODE>STANDARD</CAN-ADDRESSING-MODE>
+                      <IDENTIFIER>256</IDENTIFIER>
+                    </CAN-FRAME-TRIGGERING>
+                  </FRAME-TRIGGERINGS>
+                  <I-SIGNAL-TRIGGERINGS>
+                    <I-SIGNAL-TRIGGERING>
+                      <SHORT-NAME>ISignalTrig_EcuWhlSpd_RoadWhlAgSpd_Tx</SHORT-NAME>
+                      <I-SIGNAL-PORT-REFS>
+                        <I-SIGNAL-PORT-REF DEST="I-SIGNAL-PORT">/EcuInstances/WheelSpeed/WhlSpd_CanConnector/ISig_EcuWhlSpd_RoadWhlAgSpd_Tx_WheelSpeed_OUT</I-SIGNAL-PORT-REF>
+                      </I-SIGNAL-PORT-REFS>
+                      <I-SIGNAL-REF DEST="I-SIGNAL">/Pkg_System_Cfg/Pkg_ISignal/ISig_EcuWhlSpd_RoadWhlAgSpd_Tx</I-SIGNAL-REF>
+                    </I-SIGNAL-TRIGGERING>
+                    <I-SIGNAL-TRIGGERING>
+                      <SHORT-NAME>ISignalTrig_EcuVehSpd_RoadWhlAgSpd_Rx</SHORT-NAME>
+                      <I-SIGNAL-PORT-REFS>
+                        <I-SIGNAL-PORT-REF DEST="I-SIGNAL-PORT">/EcuInstances/VehicleSpeed/VehSpd_CanConnector/ISig_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</I-SIGNAL-PORT-REF>
+                      </I-SIGNAL-PORT-REFS>
+                      <I-SIGNAL-REF DEST="I-SIGNAL">/Pkg_System_Cfg/Pkg_ISignal/ISig_EcuVehSpd_RoadWhlAgSpd_Rx</I-SIGNAL-REF>
+                    </I-SIGNAL-TRIGGERING>
+                  </I-SIGNAL-TRIGGERINGS>
+                </CAN-PHYSICAL-CHANNEL>
+              </PHYSICAL-CHANNELS>
+              <PROTOCOL-NAME>CAN</PROTOCOL-NAME>
+            </CAN-CLUSTER-CONDITIONAL>
+          </CAN-CLUSTER-VARIANTS>
+        </CAN-CLUSTER>
+      </ELEMENTS>
+    </AR-PACKAGE>
+  </AR-PACKAGES>
+</AUTOSAR>
+

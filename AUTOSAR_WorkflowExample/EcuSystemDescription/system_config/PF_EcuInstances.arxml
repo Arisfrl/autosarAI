@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_00054.xsd">
+  <!-- AUTOSAR Workflow Example -->
+  <!--
+
+
+-WORK IN PROGRESS-
+
+Document Owner:                 AUTOSAR
+Document Responsibility:        AUTOSAR
+Document Identification Number: 1145
+Document Status:                Draft
+Part of AUTOSAR Standard:       Classic
+Part of AUTOSAR Release:        R25-11
+-->
+  <!--
+Disclaimer
+
+This work (specification and/or software implementation) and the material
+contained in it, as released by AUTOSAR, is for the purpose of information
+only. AUTOSAR and the companies that have contributed to it shall not be liable
+for any use of the work.
+
+The material contained in this work is protected by copyright and other types
+of intellectual property rights. The commercial exploitation of the material
+contained in this work requires a license to such intellectual property rights.
+
+This work may be utilized or reproduced without any modification, in any form
+or by any means, for informational purposes only. For any other purpose, no
+part of the work may be utilized or reproduced, in any form or by any means,
+without permission in writing from the publisher.
+
+The work has been developed for automotive applications only. It has neither
+been developed, nor tested for non-automotive applications.
+
+The word AUTOSAR and the AUTOSAR logo are registered trademarks.
+
+-->
+  <AR-PACKAGES>
+    <AR-PACKAGE>
+      <SHORT-NAME>EcuInstances</SHORT-NAME>
+      <ELEMENTS>
+        <ECU-INSTANCE>
+          <SHORT-NAME>WheelSpeed</SHORT-NAME>
+          <COMM-CONTROLLERS>
+            <CAN-COMMUNICATION-CONTROLLER>
+              <SHORT-NAME>WhlSpd_CanController</SHORT-NAME>
+              <CAN-COMMUNICATION-CONTROLLER-VARIANTS>
+                <CAN-COMMUNICATION-CONTROLLER-CONDITIONAL>
+                  <WAKE-UP-BY-CONTROLLER-SUPPORTED>false</WAKE-UP-BY-CONTROLLER-SUPPORTED>
+                  <CAN-CONTROLLER-ATTRIBUTES>
+                    <CAN-CONTROLLER-CONFIGURATION>
+                      <PROP-SEG>8</PROP-SEG>
+                      <SYNC-JUMP-WIDTH>3</SYNC-JUMP-WIDTH>
+                      <TIME-SEG-1>7</TIME-SEG-1>
+                      <TIME-SEG-2>4</TIME-SEG-2>
+                    </CAN-CONTROLLER-CONFIGURATION>
+                  </CAN-CONTROLLER-ATTRIBUTES>
+                </CAN-COMMUNICATION-CONTROLLER-CONDITIONAL>
+              </CAN-COMMUNICATION-CONTROLLER-VARIANTS>
+            </CAN-COMMUNICATION-CONTROLLER>
+          </COMM-CONTROLLERS>
+          <CONNECTORS>
+            <CAN-COMMUNICATION-CONNECTOR>
+              <SHORT-NAME>WhlSpd_CanConnector</SHORT-NAME>
+              <COMM-CONTROLLER-REF DEST="CAN-COMMUNICATION-CONTROLLER">/EcuInstances/WheelSpeed/WhlSpd_CanController</COMM-CONTROLLER-REF>
+              <ECU-COMM-PORT-INSTANCES>
+                <FRAME-PORT>
+                  <SHORT-NAME>CanFrame_EcuWhlSpd_RoadWhlAgSpd_Tx_WheelSpeed_OUT</SHORT-NAME>
+                  <COMMUNICATION-DIRECTION>OUT</COMMUNICATION-DIRECTION>
+                </FRAME-PORT>
+                <I-PDU-PORT>
+                  <SHORT-NAME>ISIPdu_EcuWhlSpd_RoadWhlAgSpd_Tx_WheelSpeed_OUT</SHORT-NAME>
+                  <COMMUNICATION-DIRECTION>OUT</COMMUNICATION-DIRECTION>
+                </I-PDU-PORT>
+                <I-SIGNAL-PORT>
+                  <SHORT-NAME>ISig_EcuWhlSpd_RoadWhlAgSpd_Tx_WheelSpeed_OUT</SHORT-NAME>
+                  <COMMUNICATION-DIRECTION>OUT</COMMUNICATION-DIRECTION>
+                </I-SIGNAL-PORT>
+              </ECU-COMM-PORT-INSTANCES>
+            </CAN-COMMUNICATION-CONNECTOR>
+          </CONNECTORS>
+          <PARTITIONS>
+            <ECU-PARTITION>
+              <SHORT-NAME>EcuPartWhlSpd</SHORT-NAME>
+            </ECU-PARTITION>
+          </PARTITIONS>
+        </ECU-INSTANCE>
+        <ECU-INSTANCE>
+          <SHORT-NAME>VehicleSpeed</SHORT-NAME>
+          <COMM-CONTROLLERS>
+            <CAN-COMMUNICATION-CONTROLLER>
+              <SHORT-NAME>VehSpd_CanController</SHORT-NAME>
+              <CAN-COMMUNICATION-CONTROLLER-VARIANTS>
+                <CAN-COMMUNICATION-CONTROLLER-CONDITIONAL>
+                  <WAKE-UP-BY-CONTROLLER-SUPPORTED>false</WAKE-UP-BY-CONTROLLER-SUPPORTED>
+                  <CAN-CONTROLLER-ATTRIBUTES>
+                    <CAN-CONTROLLER-CONFIGURATION>
+                      <PROP-SEG>8</PROP-SEG>
+                      <SYNC-JUMP-WIDTH>3</SYNC-JUMP-WIDTH>
+                      <TIME-SEG-1>7</TIME-SEG-1>
+                      <TIME-SEG-2>4</TIME-SEG-2>
+                    </CAN-CONTROLLER-CONFIGURATION>
+                  </CAN-CONTROLLER-ATTRIBUTES>
+                </CAN-COMMUNICATION-CONTROLLER-CONDITIONAL>
+              </CAN-COMMUNICATION-CONTROLLER-VARIANTS>
+            </CAN-COMMUNICATION-CONTROLLER>
+          </COMM-CONTROLLERS>
+          <CONNECTORS>
+            <CAN-COMMUNICATION-CONNECTOR>
+              <SHORT-NAME>VehSpd_CanConnector</SHORT-NAME>
+              <COMM-CONTROLLER-REF DEST="CAN-COMMUNICATION-CONTROLLER">/EcuInstances/VehicleSpeed/VehSpd_CanController</COMM-CONTROLLER-REF>
+              <ECU-COMM-PORT-INSTANCES>
+                <FRAME-PORT>
+                  <SHORT-NAME>CanFrame_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</SHORT-NAME>
+                  <COMMUNICATION-DIRECTION>IN</COMMUNICATION-DIRECTION>
+                </FRAME-PORT>
+                <I-PDU-PORT>
+                  <SHORT-NAME>ISIPdu_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</SHORT-NAME>
+                  <COMMUNICATION-DIRECTION>IN</COMMUNICATION-DIRECTION>
+                </I-PDU-PORT>
+                <I-SIGNAL-PORT>
+                  <SHORT-NAME>ISig_EcuVehSpd_RoadWhlAgSpd_Rx_VehicleSpeed_IN</SHORT-NAME>
+                  <COMMUNICATION-DIRECTION>IN</COMMUNICATION-DIRECTION>
+                </I-SIGNAL-PORT>
+              </ECU-COMM-PORT-INSTANCES>
+            </CAN-COMMUNICATION-CONNECTOR>
+          </CONNECTORS>
+          <PARTITIONS>
+            <ECU-PARTITION>
+              <SHORT-NAME>EcuPartVehSpd</SHORT-NAME>
+            </ECU-PARTITION>
+          </PARTITIONS>
+        </ECU-INSTANCE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+  </AR-PACKAGES>
+</AUTOSAR>

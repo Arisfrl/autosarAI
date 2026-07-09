@@ -1,0 +1,7 @@
+ollama
+langchain
+chromadb
+streamlit
+jinja2
+pyyaml
+sentence-transformers
