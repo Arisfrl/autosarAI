@@ -1,0 +1,5 @@
+{"timestamp": "2026-07-09T15:07:05.474986+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T15:12:08.749165+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 127, "mode": "ollama"}}
+{"timestamp": "2026-07-09T15:12:52.152706+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "apply_demo_baseline", "details": {"profile": "ford"}}
+{"timestamp": "2026-07-09T15:13:12.602953+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 2281}}
+{"timestamp": "2026-07-09T15:13:35.952077+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "run_safety_check", "details": {"critical": 0, "warning": 0, "info": 9, "score": 100}}
