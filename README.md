@@ -69,6 +69,16 @@ A second sidebar button loads a load optimization demo prompt for multi-core ECU
 4. The generated YAML is compiled into an ARXML-style output using Jinja2.
 5. A basic safety validator checks compliance hints and flags potential issues.
 
+## Snapshots (Use in Explanation)
+![Car + CAN + gateway](static/autosar_slide_1.svg)
+CAN domain + gateway concept
+
+![SOMEIP and Ethernet mesh](static/autosar_slide_2.svg)
+SOME/IP over Ethernet service mesh
+
+![FuSa monitor](static/autosar_slide_3.svg)
+FuSa monitor and ASIL-oriented checks
+
 ## Notes
 - This is a hackathon scaffold, not a production-grade AUTOSAR generator.
 - The `ollama` CLI must be available on the system path.
