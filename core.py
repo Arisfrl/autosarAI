@@ -7,9 +7,11 @@ import hashlib
 import threading
 import json
 import pickle
+import time
 import urllib.error
 import urllib.request
 import urllib.parse
+import copy
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -132,6 +134,80 @@ def _parse_autosar_arxml_text(xml_text: str, source_name: str = "Uploaded ARXML"
         return f"Failed to parse AUTOSAR XML content from {source_name}."
 
 
+def classify_arxml_platform(xml_text: str) -> Dict[str, object]:
+    payload = (xml_text or "").strip()
+    if not payload:
+        return {
+            "classification": "invalid",
+            "classic_score": 0,
+            "adaptive_score": 0,
+            "reason": "empty content",
+        }
+
+    try:
+        ET.fromstring(payload)
+    except ET.ParseError as exc:
+        return {
+            "classification": "invalid",
+            "classic_score": 0,
+            "adaptive_score": 0,
+            "reason": f"invalid xml: {exc}",
+        }
+
+    text_lower = payload.lower()
+    classic_markers = [
+        "<ecuc-",
+        "canif",
+        "cantp",
+        "linif",
+        "dcm",
+        "dem",
+        "ecum",
+        "watchdog",
+        "rte",
+        "autosar.org/schema/r4",
+    ]
+    adaptive_markers = [
+        "ara::",
+        "adaptive",
+        "machine-design",
+        "execution-manifest",
+        "service-instance",
+        "someipservice",
+        "persistency",
+        "phm",
+        "state-management",
+    ]
+
+    classic_hits = [marker for marker in classic_markers if marker in text_lower]
+    adaptive_hits = [marker for marker in adaptive_markers if marker in text_lower]
+    classic_score = len(classic_hits)
+    adaptive_score = len(adaptive_hits)
+
+    if adaptive_score >= 2 and adaptive_score > classic_score:
+        return {
+            "classification": "adaptive",
+            "classic_score": classic_score,
+            "adaptive_score": adaptive_score,
+            "reason": "adaptive markers detected: " + ", ".join(adaptive_hits[:4]),
+        }
+
+    if classic_score >= 1 and classic_score >= adaptive_score:
+        return {
+            "classification": "classic",
+            "classic_score": classic_score,
+            "adaptive_score": adaptive_score,
+            "reason": "classic markers detected: " + ", ".join(classic_hits[:4]),
+        }
+
+    return {
+        "classification": "unknown",
+        "classic_score": classic_score,
+        "adaptive_score": adaptive_score,
+        "reason": "insufficient known classic/adaptive markers",
+    }
+
+
 def _extract_text_from_pdf(pdf_path: Path, timeout_seconds: float = 5.0) -> str:
     """Extract text from a PDF file while avoiding startup hangs on problematic files."""
     script = f"""
@@ -201,6 +277,21 @@ def _simple_retrieve(query: str, docs: List[Dict[str, str]], top_k: int = 2) -> 
         scored.append((score, doc["text"]))
     scored.sort(key=lambda item: item[0], reverse=True)
     return [text for _, text in scored[:top_k] if _ > 0]
+
+
+def _query_tokens(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9_]+", (text or "").lower()))
+
+
+def _lexical_overlap_score(query: str, text: str) -> float:
+    q_tokens = _query_tokens(query)
+    if not q_tokens:
+        return 0.0
+    t_tokens = _query_tokens(text)
+    if not t_tokens:
+        return 0.0
+    overlap = len(q_tokens.intersection(t_tokens))
+    return overlap / max(1.0, float(len(q_tokens)))
 
 
 def _chunk_text(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_CHUNK_OVERLAP) -> List[str]:
@@ -452,9 +543,27 @@ class AutosarHackathonEngine:
 
         if use_vector:
             vector_store = self._ensure_vector_store()
-            result = vector_store.query(query_texts=[query], n_results=max(self.top_k * 3, self.top_k))
+            result = vector_store.query(
+                query_texts=[query],
+                n_results=max(self.top_k * 5, self.top_k),
+                include=["documents", "distances", "metadatas"],
+            )
             documents = result.get("documents", [[]])[0]
-            self.last_retrieved = [doc for doc in documents if doc]
+            distances = result.get("distances", [[]])[0]
+
+            ranked: List[tuple[float, str]] = []
+            for idx, doc in enumerate(documents):
+                if not doc:
+                    continue
+                lexical = _lexical_overlap_score(query, doc)
+                distance = float(distances[idx]) if idx < len(distances) and distances[idx] is not None else 1.0
+                semantic = 1.0 / (1.0 + max(0.0, distance))
+                score = (0.65 * semantic) + (0.35 * lexical)
+                ranked.append((score, doc))
+
+            ranked.sort(key=lambda item: item[0], reverse=True)
+            selected = [doc for score, doc in ranked if score > 0.05][: self.top_k]
+            self.last_retrieved = selected
             self.retrieval_cache[cache_key] = self.last_retrieved
             return self.last_retrieved
         self.last_retrieved = _simple_retrieve(query, self.docs, self.top_k)
@@ -494,6 +603,20 @@ class AutosarHackathonEngine:
             compact_references.append(candidate)
             used_chars += len(candidate)
 
+        grounding_names = set()
+        for doc in retrieved_docs or []:
+            # Prefer explicit AUTOSAR element names from parsed references.
+            for line in (doc or "").splitlines():
+                match = re.match(r"^###\s+[A-Z0-9_-]+:\s+([A-Za-z0-9_\-]+)", line.strip())
+                if match:
+                    grounding_names.add(match.group(1))
+                    continue
+                match = re.match(r"^-\s+([A-Za-z0-9_\-]+):\s+", line.strip())
+                if match:
+                    grounding_names.add(match.group(1))
+
+        grounding_preview = ", ".join(sorted(grounding_names)[:20]) if grounding_names else "(none)"
+
         prompt = [
             "You are an AUTOSAR automation assistant.",
             "Use the reference material below to generate a simplified AUTOSAR architecture in YAML.",
@@ -501,6 +624,12 @@ class AutosarHackathonEngine:
             "Focus on service mapping, signal routing, ECU load distribution, and ASIL-aware safeguards.",
             "If the request mentions Classic CAN and Adaptive SOME/IP, create a bridge section describing the service transformation.",
             "Use the following YAML structure: system, ecus, services, signals, safety.",
+            "Do not leave sections empty. Always provide meaningful entries.",
+            "Minimum structure requirements: ecus >= 2, services >= 1, signals >= 1, safety >= 1.",
+            "For names, use concise PascalCase or SCREAMING_SNAKE_CASE identifiers without spaces.",
+            "Grounding rules: reuse names/signals/services from the references when available.",
+            "Do not invent random identifiers if a relevant reference identifier exists.",
+            f"Reference identifiers (prefer these): {grounding_preview}",
             "Reference material:",
         ]
         prompt.extend(compact_references or ["(no reference material available)"])
@@ -510,6 +639,45 @@ class AutosarHackathonEngine:
             "Produce YAML with these sections: system, ecus, services, signals, safety. Keep names short and valid."
         )
         return "\n\n".join(prompt)
+
+    def _is_sparse_spec(self, yaml_text: str) -> bool:
+        try:
+            spec = self._parse_yaml_spec(yaml_text)
+        except Exception:
+            return True
+
+        ecus = spec.get("ecus") if isinstance(spec.get("ecus"), list) else []
+        services = spec.get("services") if isinstance(spec.get("services"), list) else []
+        signals = spec.get("signals") if isinstance(spec.get("signals"), list) else []
+        safety = spec.get("safety") if isinstance(spec.get("safety"), list) else []
+
+        if len(ecus) < 2:
+            return True
+        if len(services) < 1:
+            return True
+        if len(signals) < 1:
+            return True
+        if len(safety) < 1:
+            return True
+        return False
+
+    def _build_expand_prompt(self, user_request: str, current_yaml: str) -> str:
+        return "\n\n".join(
+            [
+                "You produced AUTOSAR YAML that is too sparse.",
+                "Expand and improve it while keeping it consistent with the user request.",
+                "Return only YAML. No markdown fences or commentary.",
+                "Hard requirements:",
+                "- Keep sections: system, ecus, services, signals, safety.",
+                "- Ensure ecus >= 2, services >= 1, signals >= 1, safety >= 1.",
+                "- Fill all important fields with practical non-empty values.",
+                "- Keep safety checks concrete (ASIL, watchdog, plausibility, timeout, etc.).",
+                "User request:",
+                user_request.strip(),
+                "Current YAML to improve:",
+                current_yaml.strip(),
+            ]
+        )
 
     def _call_ollama(self, prompt: str) -> str:
         api_payload = json.dumps(
@@ -590,61 +758,107 @@ class AutosarHackathonEngine:
                 "Gemini API key is missing. Provide it in the UI or set GEMINI_API_KEY."
             )
 
-        model = (self.model_name or "gemini-2.0-flash").strip()
-        if model.startswith("models/"):
-            model = model.split("/", 1)[1]
-        encoded_model = urllib.parse.quote(model, safe="")
-        endpoint = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/{encoded_model}:generateContent"
-            f"?key={urllib.parse.quote(api_key, safe='')}"
-        )
+        base_model = (self.model_name or "gemini-2.0-flash").strip()
+        if base_model.startswith("models/"):
+            base_model = base_model.split("/", 1)[1]
+
+        models_to_try = [base_model]
+        if base_model == "gemini-2.5-flash":
+            models_to_try.extend(["gemini-2.0-flash", "gemini-2.0-flash-lite"])
+        elif base_model == "gemini-2.5-pro":
+            models_to_try.extend(["gemini-2.5-flash", "gemini-2.0-flash"])
+
+        seen_models = set()
+        ordered_models = []
+        for candidate in models_to_try:
+            if candidate in seen_models:
+                continue
+            seen_models.add(candidate)
+            ordered_models.append(candidate)
+
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
-                "temperature": 0.2,
+                "temperature": 0.0,
                 "topP": 0.9,
                 "maxOutputTokens": 2048,
             },
         }
-        request = urllib.request.Request(
-            endpoint,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=180) as response:
-                body = response.read().decode("utf-8", errors="replace")
-            data = json.loads(body)
-        except urllib.error.HTTPError as exc:
-            details = exc.read().decode("utf-8", errors="replace") if hasattr(exc, "read") else str(exc)
-            details_lower = details.lower()
-            if exc.code == 404 and "listmodels" in details_lower:
-                suggestions = self._list_gemini_models(api_key)
-                if suggestions:
-                    hint = ", ".join(suggestions[:6])
-                    raise RuntimeError(
-                        "Gemini model is not available for this API key/version. "
-                        f"Try one of: {hint}"
-                    ) from exc
-                raise RuntimeError(
-                    "Gemini model is not available for this API key/version. "
-                    "Use a currently supported model such as gemini-2.0-flash."
-                ) from exc
-            raise RuntimeError(f"Gemini request failed: {details}") from exc
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            raise RuntimeError(f"Gemini request failed: {exc}") from exc
 
-        candidates = data.get("candidates") or []
-        if not candidates:
-            raise RuntimeError("Gemini returned no candidates.")
+        transient_errors: List[str] = []
 
-        parts = candidates[0].get("content", {}).get("parts", [])
-        text_response = "\n".join(str(part.get("text", "")) for part in parts if part.get("text"))
-        text_response = text_response.strip()
-        if not text_response:
-            raise RuntimeError("Gemini returned an empty response.")
-        return text_response
+        for model in ordered_models:
+            encoded_model = urllib.parse.quote(model, safe="")
+            endpoint = (
+                f"https://generativelanguage.googleapis.com/v1beta/models/{encoded_model}:generateContent"
+                f"?key={urllib.parse.quote(api_key, safe='')}"
+            )
+
+            for attempt in range(3):
+                request = urllib.request.Request(
+                    endpoint,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                try:
+                    with urllib.request.urlopen(request, timeout=180) as response:
+                        body = response.read().decode("utf-8", errors="replace")
+                    data = json.loads(body)
+
+                    candidates = data.get("candidates") or []
+                    if not candidates:
+                        raise RuntimeError("Gemini returned no candidates.")
+
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    text_response = "\n".join(
+                        str(part.get("text", "")) for part in parts if part.get("text")
+                    ).strip()
+                    if not text_response:
+                        raise RuntimeError("Gemini returned an empty response.")
+                    return text_response
+
+                except urllib.error.HTTPError as exc:
+                    details = exc.read().decode("utf-8", errors="replace") if hasattr(exc, "read") else str(exc)
+                    details_lower = details.lower()
+
+                    if exc.code == 404 and "listmodels" in details_lower:
+                        suggestions = self._list_gemini_models(api_key)
+                        if suggestions:
+                            hint = ", ".join(suggestions[:6])
+                            raise RuntimeError(
+                                "Gemini model is not available for this API key/version. "
+                                f"Try one of: {hint}"
+                            ) from exc
+                        raise RuntimeError(
+                            "Gemini model is not available for this API key/version. "
+                            "Use a currently supported model such as gemini-2.0-flash."
+                        ) from exc
+
+                    if exc.code in (429, 503):
+                        transient_errors.append(f"{model} attempt {attempt + 1}: {details}")
+                        if attempt < 2:
+                            time.sleep(0.8 * (2 ** attempt))
+                            continue
+                        break
+
+                    raise RuntimeError(f"Gemini request failed: {details}") from exc
+
+                except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+                    transient_errors.append(f"{model} attempt {attempt + 1}: {exc}")
+                    if attempt < 2:
+                        time.sleep(0.8 * (2 ** attempt))
+                        continue
+                    break
+
+        if transient_errors:
+            tried = ", ".join(ordered_models)
+            raise RuntimeError(
+                "Gemini is temporarily unavailable due to high demand. "
+                f"Tried models: {tried}. Last error: {transient_errors[-1]}"
+            )
+
+        raise RuntimeError("Gemini request failed for unknown reasons.")
 
     def _list_gemini_models(self, api_key: str) -> List[str]:
         endpoint = (
@@ -719,7 +933,16 @@ safety:
         retrieved_docs = self._retrieve_documents(user_request, use_vector_retrieval)
         prompt = self._build_prompt(user_request, retrieved_docs)
         self.last_prompt = prompt
-        return self._extract_yaml_payload(self._call_model(prompt))
+        yaml_payload = self._extract_yaml_payload(self._call_model(prompt))
+
+        # Gemini can be overly conservative and return sparse structures.
+        # Retry once with a strict expansion prompt to align output richness.
+        if self.model_provider == "gemini" and self._is_sparse_spec(yaml_payload):
+            expand_prompt = self._build_expand_prompt(user_request, yaml_payload)
+            self.last_prompt = f"{prompt}\n\n# Expansion pass\n\n{expand_prompt}"
+            yaml_payload = self._extract_yaml_payload(self._call_model(expand_prompt))
+
+        return yaml_payload
 
     def get_last_prompt(self) -> str:
         return self.last_prompt
@@ -736,11 +959,91 @@ safety:
 
         return payload
 
+    def _parse_yaml_spec_lenient(self, yaml_text: str) -> Dict[str, object]:
+        payload = self._extract_yaml_payload(yaml_text).replace("\t", "  ").replace("\xa0", " ")
+        lines = payload.splitlines()
+
+        spec: Dict[str, object] = {
+            "system": {},
+            "ecus": [],
+            "services": [],
+            "signals": [],
+            "safety": [],
+        }
+
+        section: Optional[str] = None
+        current_item: Optional[object] = None
+
+        for raw_line in lines:
+            line = raw_line.rstrip()
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+
+            section_match = re.match(r"^(system|ecus|services|signals|safety)\s*:\s*$", stripped, flags=re.IGNORECASE)
+            if section_match:
+                section = section_match.group(1).lower()
+                current_item = None
+                continue
+
+            if section is None:
+                continue
+
+            if section == "system":
+                if stripped.startswith("-"):
+                    continue
+                if ":" in stripped:
+                    key, value = stripped.split(":", 1)
+                    key = key.strip()
+                    value = value.strip().strip('"\'')
+                    if key:
+                        spec["system"][key] = value
+                continue
+
+            # List-like sections.
+            section_items = spec[section]
+            if not isinstance(section_items, list):
+                continue
+
+            if stripped.startswith("-"):
+                entry = stripped[1:].strip()
+                if not entry:
+                    current_item = {}
+                    section_items.append(current_item)
+                    continue
+
+                if ":" in entry:
+                    key, value = entry.split(":", 1)
+                    item_dict = {key.strip(): value.strip().strip('"\'')}
+                    section_items.append(item_dict)
+                    current_item = item_dict
+                else:
+                    scalar_value = entry.strip('"\'')
+                    section_items.append(scalar_value)
+                    current_item = scalar_value
+                continue
+
+            if ":" in stripped and isinstance(current_item, dict):
+                key, value = stripped.split(":", 1)
+                key = key.strip()
+                value = value.strip().strip('"\'')
+                if key:
+                    current_item[key] = value
+
+        return spec
+
     def _parse_yaml_spec(self, yaml_text: str) -> Dict[str, object]:
         payload = self._extract_yaml_payload(yaml_text)
         try:
             parsed = yaml.safe_load(payload)
         except yaml.YAMLError as exc:
+            recovered = self._parse_yaml_spec_lenient(payload)
+            if isinstance(recovered, dict):
+                has_content = bool(recovered.get("system")) or any(
+                    bool(recovered.get(section)) for section in ["ecus", "services", "signals", "safety"]
+                )
+                if has_content:
+                    return recovered
             mark = getattr(exc, "problem_mark", None)
             if mark is not None:
                 line = mark.line + 1
@@ -766,6 +1069,23 @@ safety:
         ecus = spec["ecus"] if isinstance(spec.get("ecus"), list) else []
         default_asil = str(baseline.get("default_asil", "B"))
         default_processor = str(baseline.get("default_processor", "Generic_MCU"))
+
+        if not ecus:
+            profile_token = (profile or "default").strip().lower()
+            prefix = "Default" if profile_token == "default" else re.sub(r"[^a-zA-Z0-9]+", "", profile_token).title()
+            ecus = [
+                {
+                    "name": f"{prefix}CanIngressECU",
+                    "asil": default_asil,
+                    "processor": default_processor,
+                },
+                {
+                    "name": f"{prefix}SomeIpGatewayECU",
+                    "asil": default_asil,
+                    "processor": default_processor,
+                },
+            ]
+
         for ecu in ecus:
             if isinstance(ecu, dict):
                 if not str(ecu.get("asil", "")).strip():
@@ -802,12 +1122,7 @@ safety:
 
     def compile_to_arxml(self, yaml_text: str, use_mapping_precheck: bool = True) -> str:
         data = self._parse_yaml_spec(yaml_text)
-
-        data.setdefault("system", {})
-        data.setdefault("ecus", [])
-        data.setdefault("services", [])
-        data.setdefault("signals", [])
-        data.setdefault("safety", [])
+        data = self._normalize_spec_for_compile(data)
 
         if use_mapping_precheck:
             mapping_assessment = self._assess_mapping_features(data)
@@ -828,7 +1143,441 @@ safety:
                 )
 
         template = self.template_env.get_template("arxml_template.xml.j2")
-        return template.render(spec=data)
+        raw_xml = template.render(spec=data)
+        return self._format_arxml_output(raw_xml)
+
+    @staticmethod
+    def _format_arxml_output(xml_text: str) -> str:
+        """Produce stable, readable XML output with deterministic indentation."""
+        try:
+            root = ET.fromstring(xml_text)
+            tree = ET.ElementTree(root)
+            ET.indent(tree, space="  ")
+            return ET.tostring(root, encoding="unicode") if xml_text.strip().startswith("<AUTOSAR") else (
+                '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding="unicode")
+            )
+        except Exception:
+            # Keep original output if formatting fails for any reason.
+            return xml_text.strip()
+
+    def generate_ai_suggestions(
+        self,
+        yaml_text: str,
+        use_mapping_check: bool = True,
+        max_items: int = 5,
+    ) -> List[Dict[str, object]]:
+        try:
+            spec = self._parse_yaml_spec(yaml_text)
+        except Exception:
+            return [
+                {
+                    "id": "YAML_PARSE_FIX",
+                    "title": "Repair YAML structure",
+                    "category": "safety_completeness",
+                    "rationale": "YAML could not be parsed reliably.",
+                    "patch_instruction": "Regenerate YAML and ensure top-level keys: system, ecus, services, signals, safety.",
+                    "confidence": 0.95,
+                }
+            ]
+
+        report = self.safety_check_report(yaml_text, use_mapping_check=use_mapping_check)
+        findings = report.get("findings", []) if isinstance(report, dict) else []
+
+        ecus = spec.get("ecus", []) if isinstance(spec.get("ecus", []), list) else []
+        services = spec.get("services", []) if isinstance(spec.get("services", []), list) else []
+        signals = spec.get("signals", []) if isinstance(spec.get("signals", []), list) else []
+        safety = spec.get("safety", []) if isinstance(spec.get("safety", []), list) else []
+
+        suggestions: List[Dict[str, object]] = []
+
+        def add_suggestion(
+            sid: str,
+            title: str,
+            category: str,
+            rationale: str,
+            patch_instruction: str,
+            confidence: float,
+        ):
+            suggestions.append(
+                {
+                    "id": sid,
+                    "title": title,
+                    "category": category,
+                    "rationale": rationale,
+                    "patch_instruction": patch_instruction,
+                    "confidence": round(float(confidence), 2),
+                }
+            )
+
+        if len(ecus) < 2:
+            add_suggestion(
+                "DEPLOY_ECU_COUNT_LOW",
+                "Increase ECU deployment coverage",
+                "deployment",
+                "Current architecture has low ECU coverage for realistic partitioning.",
+                "Add at least two ECUs and split source/control responsibilities.",
+                0.88,
+            )
+
+        if not any(str(item.get("protocol", "")).strip().lower() == "some/ip" for item in services if isinstance(item, dict)):
+            add_suggestion(
+                "SVC_ADD_SOMEIP",
+                "Add SOME/IP service binding",
+                "services",
+                "Adaptive communication is incomplete without SOME/IP service definitions.",
+                "Add a SOME/IP service with name, route, and protocol fields.",
+                0.91,
+            )
+
+        if not any("can" in str(item.get("format", "")).lower() for item in signals if isinstance(item, dict)):
+            add_suggestion(
+                "SIG_ADD_CAN_MAPPING",
+                "Add CAN signal mapping",
+                "signals",
+                "Classic-to-Adaptive path needs at least one CAN-origin signal mapping.",
+                "Add signal entries with source, destination, and format: CAN.",
+                0.89,
+            )
+
+        missing_asil = sum(
+            1
+            for ecu in ecus
+            if isinstance(ecu, dict) and not str(ecu.get("asil", "")).strip()
+        )
+        if missing_asil > 0:
+            add_suggestion(
+                "ECU_ASIL_FILL",
+                "Complete ECU ASIL assignments",
+                "safety_completeness",
+                f"{missing_asil} ECU(s) are missing ASIL values.",
+                "Set asil on each ECU (QM or A/B/C/D as appropriate).",
+                0.9,
+            )
+
+        missing_hw = sum(
+            1
+            for ecu in ecus
+            if isinstance(ecu, dict) and not self._has_hardware_binding(ecu)
+        )
+        if missing_hw > 0:
+            add_suggestion(
+                "ECU_HW_BINDING_FILL",
+                "Add ECU hardware bindings",
+                "deployment",
+                f"{missing_hw} ECU(s) do not specify processor/platform bindings.",
+                "Set processor/platform for each ECU to improve deployment clarity.",
+                0.86,
+            )
+
+        if not safety:
+            add_suggestion(
+                "SAFETY_CHECKLIST_ADD",
+                "Add safety checklist items",
+                "safety_completeness",
+                "Safety checklist is empty; validation confidence is reduced.",
+                "Add checks such as asil_b_monitoring, watchdog_supervision, and signal_plausibility_check.",
+                0.93,
+            )
+
+        if not suggestions:
+            add_suggestion(
+                "QUALITY_TUNE_ROUTING",
+                "Refine service-to-signal routing",
+                "provider_bindings",
+                "No critical gaps found; quality can still improve with clearer routing semantics.",
+                "Align signal names with service intent and ensure route/path fields are explicit.",
+                0.72,
+            )
+
+        # Promote issues explicitly detected in current findings.
+        joined_findings = " ".join(str(item.get("message", "")) for item in findings).lower()
+        if "low-confidence mapping" in joined_findings:
+            add_suggestion(
+                "MAP_LOW_CONFIDENCE_REVIEW",
+                "Review low-confidence mappings",
+                "provider_bindings",
+                "ML mapping check reported low-confidence mappings.",
+                "Review signal-to-service pairs and enforce explicit target service_name fields.",
+                0.84,
+            )
+
+        return suggestions[: max(1, int(max_items))]
+
+    def apply_selected_suggestions(self, yaml_text: str, selected_ids: List[str]) -> str:
+        spec = self._parse_yaml_spec(yaml_text)
+        selected = {str(item).strip() for item in (selected_ids or []) if str(item).strip()}
+        if not selected:
+            return yaml.safe_dump(spec, sort_keys=False, allow_unicode=True)
+
+        updated = copy.deepcopy(spec)
+        updated.setdefault("system", {})
+        updated.setdefault("ecus", [])
+        updated.setdefault("services", [])
+        updated.setdefault("signals", [])
+        updated.setdefault("safety", [])
+
+        ecus = updated["ecus"] if isinstance(updated.get("ecus"), list) else []
+        services = updated["services"] if isinstance(updated.get("services"), list) else []
+        signals = updated["signals"] if isinstance(updated.get("signals"), list) else []
+        safety = updated["safety"] if isinstance(updated.get("safety"), list) else []
+
+        if "DEPLOY_ECU_COUNT_LOW" in selected:
+            while len(ecus) < 2:
+                idx = len(ecus) + 1
+                ecus.append({"name": f"ECU_{idx}", "asil": "B", "processor": "Automotive_MCU"})
+
+        if "ECU_ASIL_FILL" in selected:
+            for ecu in ecus:
+                if isinstance(ecu, dict) and not str(ecu.get("asil", "")).strip():
+                    ecu["asil"] = "B"
+
+        if "ECU_HW_BINDING_FILL" in selected:
+            for ecu in ecus:
+                if isinstance(ecu, dict) and not self._has_hardware_binding(ecu):
+                    ecu["processor"] = "Automotive_MCU"
+
+        if "SVC_ADD_SOMEIP" in selected:
+            if not any(isinstance(item, dict) and str(item.get("protocol", "")).strip().lower() == "some/ip" for item in services):
+                services.append({"name": "VehicleSomeIpService", "route": "/vehicle/service", "protocol": "SOME/IP"})
+
+        if "SIG_ADD_CAN_MAPPING" in selected:
+            if not any(isinstance(item, dict) and "can" in str(item.get("format", "")).lower() for item in signals):
+                source_name = "ECU_1"
+                destination_name = "ECU_2"
+                if ecus and isinstance(ecus[0], dict):
+                    source_name = str(ecus[0].get("name", source_name))
+                if len(ecus) > 1 and isinstance(ecus[1], dict):
+                    destination_name = str(ecus[1].get("name", destination_name))
+                signals.append(
+                    {
+                        "name": "VehicleSpeedSignal",
+                        "source": source_name,
+                        "destination": destination_name,
+                        "format": "CAN",
+                    }
+                )
+
+        if "SAFETY_CHECKLIST_ADD" in selected:
+            existing = {str(item).strip().lower() for item in safety if isinstance(item, str)}
+            for check in ["asil_b_monitoring", "watchdog_supervision", "signal_plausibility_check"]:
+                if check.lower() not in existing:
+                    safety.append(check)
+
+        updated["ecus"] = ecus
+        updated["services"] = services
+        updated["signals"] = signals
+        updated["safety"] = safety
+        return yaml.safe_dump(updated, sort_keys=False, allow_unicode=True)
+
+    @staticmethod
+    def summarize_safety_improvement(previous: Dict[str, object], current: Dict[str, object]) -> Dict[str, object]:
+        prev_score = int(previous.get("score", 0) or 0)
+        curr_score = int(current.get("score", 0) or 0)
+        delta = curr_score - prev_score
+
+        prev_counts = previous.get("counts", {}) if isinstance(previous.get("counts", {}), dict) else {}
+        curr_counts = current.get("counts", {}) if isinstance(current.get("counts", {}), dict) else {}
+
+        improved_items: List[str] = []
+        if int(curr_counts.get("critical", 0) or 0) < int(prev_counts.get("critical", 0) or 0):
+            improved_items.append("critical findings reduced")
+        if int(curr_counts.get("warning", 0) or 0) < int(prev_counts.get("warning", 0) or 0):
+            improved_items.append("warning findings reduced")
+        if delta > 0:
+            improved_items.append("overall safety score increased")
+
+        remaining = [
+            item
+            for item in (current.get("findings", []) if isinstance(current.get("findings", []), list) else [])
+            if item.get("severity") in {"critical", "warning"}
+        ]
+
+        return {
+            "previous_score": prev_score,
+            "new_score": curr_score,
+            "delta": delta,
+            "improved": improved_items,
+            "remaining": remaining,
+        }
+
+    @staticmethod
+    def _pick_first_non_empty(payload: Dict[str, object], keys: List[str], default: str = "") -> str:
+        for key in keys:
+            value = str(payload.get(key, "")).strip()
+            if value:
+                return value
+        return default
+
+    @staticmethod
+    def _to_list(value) -> List[object]:
+        if isinstance(value, list):
+            return value
+        if value is None:
+            return []
+        return [value]
+
+    def _infer_domain_hint(self, spec: Dict[str, object]) -> str:
+        corpus: List[str] = []
+
+        system_raw = spec.get("system", {})
+        if isinstance(system_raw, dict):
+            for key in ["name", "description", "short_name", "summary"]:
+                value = str(system_raw.get(key, "")).strip()
+                if value:
+                    corpus.append(value.lower())
+
+        for section in ["ecus", "services", "signals", "safety"]:
+            for item in self._to_list(spec.get(section, [])):
+                if isinstance(item, dict):
+                    for value in item.values():
+                        text = str(value).strip()
+                        if text:
+                            corpus.append(text.lower())
+                elif isinstance(item, str) and item.strip():
+                    corpus.append(item.strip().lower())
+
+        joined = " ".join(corpus)
+        if any(token in joined for token in ["aeb", "brake", "ebrake", "emergency braking"]):
+            return "BrakeControl"
+        if any(token in joined for token in ["wheel", "vehicle speed", "speed"]):
+            return "VehicleSpeed"
+        if any(token in joined for token in ["temp", "thermal", "heat"]):
+            return "Thermal"
+        if any(token in joined for token in ["gateway", "some/ip", "can", "ethernet"]):
+            return "Gateway"
+        if any(token in joined for token in ["battery", "soc", "bms", "charge"]):
+            return "BatteryManagement"
+        return "VehicleControl"
+
+    def _normalize_spec_for_compile(self, spec: Dict[str, object]) -> Dict[str, object]:
+        normalized: Dict[str, object] = {}
+        domain_hint = self._infer_domain_hint(spec)
+
+        system_raw = spec.get("system", {})
+        if not isinstance(system_raw, dict):
+            system_raw = {}
+        normalized["system"] = {
+            "name": self._pick_first_non_empty(
+                system_raw,
+                ["name", "short_name", "system", "system_name"],
+                default=f"{domain_hint}System",
+            ),
+            "description": self._pick_first_non_empty(
+                system_raw,
+                ["description", "desc", "summary"],
+                default=f"AUTOSAR architecture for {domain_hint} use case",
+            ),
+        }
+
+        ecus: List[Dict[str, str]] = []
+        for index, item in enumerate(self._to_list(spec.get("ecus", [])), start=1):
+            if not isinstance(item, dict):
+                continue
+            name = self._pick_first_non_empty(item, ["name", "short_name", "id"], default=f"ECU_{index}")
+            processor = self._pick_first_non_empty(
+                item,
+                ["processor", "hardware", "platform", "cpu", "soc", "node"],
+                default="Automotive_MCU",
+            )
+            asil = self._pick_first_non_empty(
+                item,
+                ["asil", "safety_class", "safety"],
+                default="QM",
+            )
+            ecus.append({"name": name, "processor": processor, "asil": asil})
+
+        while len(ecus) < 2:
+            if len(ecus) == 0:
+                fallback_name = f"{domain_hint}InputECU"
+            else:
+                fallback_name = f"{domain_hint}ControlECU"
+            ecus.append({"name": fallback_name, "processor": "Automotive_MCU", "asil": "QM"})
+
+        services: List[Dict[str, str]] = []
+        for index, item in enumerate(self._to_list(spec.get("services", [])), start=1):
+            if not isinstance(item, dict):
+                continue
+            name = self._pick_first_non_empty(
+                item,
+                ["name", "short_name", "service", "service_name"],
+                default=f"Service_{index}",
+            )
+            route = self._pick_first_non_empty(
+                item,
+                ["route", "path", "topic", "channel"],
+                default=f"/{domain_hint.lower()}/service",
+            )
+            protocol = self._pick_first_non_empty(
+                item,
+                ["protocol", "transport", "bus"],
+                default="SOME/IP",
+            )
+            services.append({"name": name, "route": route, "protocol": protocol})
+
+        if not services:
+            services.append(
+                {
+                    "name": f"{domain_hint}SomeIpService",
+                    "route": f"/{domain_hint.lower()}/service",
+                    "protocol": "SOME/IP",
+                }
+            )
+
+        signals: List[Dict[str, str]] = []
+        for index, item in enumerate(self._to_list(spec.get("signals", [])), start=1):
+            if not isinstance(item, dict):
+                continue
+            name = self._pick_first_non_empty(
+                item,
+                ["name", "short_name", "signal", "signal_name", "source"],
+                default=f"Signal_{index}",
+            )
+            source = self._pick_first_non_empty(item, ["source", "src", "producer", "from"], default="")
+            destination = self._pick_first_non_empty(
+                item,
+                ["destination", "dest", "target", "to"],
+                default="",
+            )
+            fmt = self._pick_first_non_empty(item, ["format", "bus", "protocol", "type"], default="CAN")
+            signals.append(
+                {
+                    "name": name,
+                    "source": source,
+                    "destination": destination,
+                    "format": fmt,
+                }
+            )
+
+        if not signals:
+            signals.append(
+                {
+                    "name": f"{domain_hint}Signal",
+                    "source": ecus[0]["name"],
+                    "destination": ecus[1]["name"],
+                    "format": "CAN",
+                }
+            )
+
+        safety_checks: List[str] = []
+        for item in self._to_list(spec.get("safety", [])):
+            if isinstance(item, str):
+                value = item.strip()
+                if value:
+                    safety_checks.append(value)
+                continue
+            if isinstance(item, dict):
+                value = self._pick_first_non_empty(item, ["check", "name", "rule", "type"], default="")
+                if value:
+                    safety_checks.append(value)
+
+        if not safety_checks:
+            safety_checks = ["asil_b_monitoring", "signal_plausibility_check"]
+
+        normalized["ecus"] = ecus
+        normalized["services"] = services
+        normalized["signals"] = signals
+        normalized["safety"] = safety_checks
+        return normalized
 
     def _append_finding(self, report: Dict[str, object], severity: str, message: str):
         findings = report.get("findings", [])
@@ -1049,8 +1798,8 @@ safety:
             self._append_finding(report, severity, message)
 
         try:
-            spec = yaml.safe_load(yaml_text) or {}
-        except yaml.YAMLError as exc:
+            spec = self._parse_yaml_spec(yaml_text)
+        except Exception as exc:
             add_finding("critical", f"YAML parse error: {exc}")
             report["summary"] = "Validation failed"
             report["score"] = 0
