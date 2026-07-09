@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AUTOSAR AI Demo Pitch</title>
+  <style>
+    :root {
+      --bg: #f3f8ff;
+      --panel: #ffffff;
+      --ink: #0f2540;
+      --muted: #4b6786;
+      --line: #cfe1f6;
+      --blue: #1f74d8;
+      --blue-soft: #e8f2ff;
+      --ok: #0d9b69;
+      --shadow: 0 10px 24px rgba(24, 71, 126, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top right, #dfefff 0%, var(--bg) 38%, #edf5ff 100%);
+      color: var(--ink);
+      font: 15px/1.5 "Segoe UI", Tahoma, sans-serif;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid var(--line);
+      background: #ffffffcc;
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #1f74d8 0%, #0f4fa0 100%);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      flex: 0 0 auto;
+    }
+
+    .brand-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #113966;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #c6dcfb;
+      background: #eef6ff;
+      border-radius: 999px;
+      padding: 6px 10px 6px 6px;
+      min-height: 42px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0b3f7a;
+      border: 1px solid #b8d5fb;
+      background: #dcecff;
+      flex: 0 0 auto;
+    }
+
+    .profile-text {
+      font-size: 13px;
+      color: #174474;
+      line-height: 1.25;
+      white-space: nowrap;
+    }
+
+    .tenant-chip {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #a7cdf9;
+      background: #deedff;
+      color: #0f4f99;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #ffffff 0%, #eef5ff 100%);
+      box-shadow: var(--shadow);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1.2;
+      letter-spacing: 0.2px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 78ch;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .card {
+      grid-column: span 12;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+
+    h2 {
+      margin: 2px 0 10px;
+      font-size: 18px;
+      color: #10345d;
+    }
+
+    .mini {
+      color: var(--muted);
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .kpi {
+      background: var(--blue-soft);
+      border: 1px solid #c6dcfb;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .kpi b {
+      display: block;
+      font-size: 22px;
+      color: var(--blue);
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      align-items: center;
+    }
+
+    .node {
+      position: relative;
+      background: #f7fbff;
+      border: 1px solid #cfe1f6;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 84px;
+    }
+
+    .node .tag {
+      display: inline-block;
+      font-size: 11px;
+      color: #0d4f9b;
+      background: #dcecff;
+      border: 1px solid #bed8fa;
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin-bottom: 6px;
+    }
+
+    .arrow {
+      text-align: center;
+      color: #88a9cd;
+      font-weight: 700;
+      font-size: 20px;
+    }
+
+    .code-block {
+      position: relative;
+      margin: 0;
+      background: #0f243f;
+      color: #e7f1ff;
+      border-radius: 12px;
+      border: 1px solid #26456e;
+      padding: 10px;
+      overflow: auto;
+      font: 12px/1.4 Consolas, "Courier New", monospace;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border: 1px solid #90b7e5;
+      border-radius: 8px;
+      background: #e9f3ff;
+      color: #174474;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .snap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .snap {
+      border: 1px solid #cfe1f6;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f7fbff;
+    }
+
+    .snap img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .snap figcaption {
+      padding: 8px;
+      font-size: 13px;
+      color: #274d7a;
+    }
+
+    .steps {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .steps li { margin-bottom: 4px; }
+
+    .ok {
+      color: var(--ok);
+      font-weight: 600;
+    }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid #b7d4f8;
+      background: #e9f3ff;
+      color: #1e5ea7;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 900px) {
+      .span-6, .span-4 { grid-column: span 12; }
+      .flow { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); }
+      .snap-grid { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr; }
+      .top-nav {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .profile {
+        border-radius: 12px;
+      }
+      .profile-text {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="top-nav" aria-label="User profile and tenant">
+      <div class="brand">
+        <div class="brand-mark">AA</div>
+        <div class="brand-name">AUTOSAR AI Demo Console</div>
+      </div>
+      <div class="profile" role="status" aria-live="polite">
+        <div class="avatar" id="navAvatar">BA</div>
+        <div class="profile-text" id="navProfileText">
+          Signed in as BMW Admin (admin)<span class="tenant-chip">tenant: bmw</span>
+        </div>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <h1>AI-Augmented AUTOSAR MDE</h1>
+      <p>
+        We convert natural-language requirements into AUTOSAR YAML and compile to ARXML, with grounding,
+        safety checks, and faster iteration than manual modeling.
+      </p>
+      <div style="margin-top:10px">
+        <span class="pill">LLM + RAG</span>
+        <span class="pill">YAML Generation</span>
+        <span class="pill">ARXML Compile</span>
+        <span class="pill">Safety Validation</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Concise Flowchart</h2>
+      <div class="flow">
+        <div class="node">
+          <div class="tag">INPUT</div>
+          Requirement Prompt<br>
+          Example: Brake-by-wire ASIL D
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <div class="tag">AI LAYER</div>
+          LLM + RAG from AUTOSAR docs<br>
+          Structured YAML output
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <div class="tag">ENGINEERING</div>
+          Compile YAML → ARXML<br>
+          Safety checks + review
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card span-6">
+        <h2>What Makes This Different</h2>
+        <p class="mini">Not generic chatbot output. This is a controlled model-driven pipeline.</p>
+        <ol class="steps">
+          <li>Uses local AUTOSAR references (grounded generation).</li>
+          <li>Forces schema sections: system, ecus, services, signals, safety.</li>
+          <li>Compiles to ARXML for downstream model workflows.</li>
+          <li>Runs safety-focused checks before handoff.</li>
+        </ol>
+        <p class="ok">Result: faster drafts, fewer manual formatting errors, better traceability.</p>
+      </section>
+
+      <section class="card span-6">
+        <h2>Quick Metrics to Say in Demo</h2>
+        <div class="kpis">
+          <div class="kpi"><b id="kpi1">0</b>Steps from prompt to ARXML</div>
+          <div class="kpi"><b id="kpi2">0</b>Schema sections enforced</div>
+          <div class="kpi"><b id="kpi3">0</b>Local reference grounding</div>
+        </div>
+      </section>
+
+      <section class="card span-6">
+        <h2>Core Features (README)</h2>
+        <ol class="steps">
+          <li>RAG-backed generation from local AUTOSAR references.</li>
+          <li>Simplified AUTOSAR YAML output for architecture and services.</li>
+          <li>Compile path from YAML to ARXML-like artifact.</li>
+          <li>ISO 26262/ASIL-oriented safety checklist.</li>
+          <li>Demo prompt builder for CAN to SOME/IP scenarios.</li>
+        </ol>
+      </section>
+
+      <section class="card span-6">
+        <h2>Setup and Tenant Isolation</h2>
+        <ol class="steps">
+          <li>Pull model: <b>ollama pull llama3.1</b></li>
+          <li>Create venv and install requirements.</li>
+          <li>Launch app with Streamlit and login by tenant.</li>
+          <li>Tenant-scoped Chroma storage: <b>chroma_db/&lt;tenant&gt;/</b></li>
+          <li>Tenant-scoped audit log: <b>audit/&lt;tenant&gt;_audit.jsonl</b></li>
+        </ol>
+      </section>
+
+      <section class="card span-6">
+        <h2>Mini Flowchart: Generation Path</h2>
+        <div class="flow">
+          <div class="node">
+            <div class="tag">STEP 1</div>
+            Requirement Prompt
+          </div>
+          <div class="arrow">→</div>
+          <div class="node">
+            <div class="tag">STEP 2</div>
+            RAG + LLM
+          </div>
+          <div class="arrow">→</div>
+          <div class="node">
+            <div class="tag">STEP 3</div>
+            Structured YAML
+          </div>
+        </div>
+      </section>
+
+      <section class="card span-6">
+        <h2>Mini Flowchart: Validation Path</h2>
+        <div class="flow">
+          <div class="node">
+            <div class="tag">STEP 4</div>
+            Compile to ARXML
+          </div>
+          <div class="arrow">→</div>
+          <div class="node">
+            <div class="tag">STEP 5</div>
+            Safety Checks
+          </div>
+          <div class="arrow">→</div>
+          <div class="node">
+            <div class="tag">STEP 6</div>
+            Review + Download
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Snapshots (Use in Explanation)</h2>
+        <div class="snap-grid">
+          <figure class="snap">
+            <img src="static/autosar_slide_1.svg" alt="Car + CAN + gateway" />
+            <figcaption>CAN domain + gateway concept</figcaption>
+          </figure>
+          <figure class="snap">
+            <img src="static/autosar_slide_2.svg" alt="SOMEIP and Ethernet mesh" />
+            <figcaption>SOME/IP over Ethernet service mesh</figcaption>
+          </figure>
+          <figure class="snap">
+            <img src="static/autosar_slide_3.svg" alt="FuSa monitor" />
+            <figcaption>FuSa monitor and ASIL-oriented checks</figcaption>
+          </figure>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    function animateValue(id, end, suffix = "") {
+      const node = document.getElementById(id);
+      const steps = 24;
+      let i = 0;
+      const timer = setInterval(() => {
+        i += 1;
+        const val = Math.round((end / steps) * i);
+        node.textContent = val + suffix;
+        if (i >= steps) clearInterval(timer);
+      }, 26);
+    }
+
+    animateValue("kpi1", 4);
+    animateValue("kpi2", 5);
+    animateValue("kpi3", 1, "x");
+
+    const tenantProfiles = {
+      bmw: {
+        name: "BMW Admin",
+        role: "admin",
+        tenant: "bmw",
+        avatar: "BA"
+      },
+      ford: {
+        name: "Ford Admin",
+        role: "admin",
+        tenant: "ford",
+        avatar: "FA"
+      }
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const tenant = (params.get("tenant") || "bmw").toLowerCase();
+    const profile = tenantProfiles[tenant] || tenantProfiles.bmw;
+
+    const navAvatar = document.getElementById("navAvatar");
+    const navProfileText = document.getElementById("navProfileText");
+    navAvatar.textContent = profile.avatar;
+    navProfileText.innerHTML = `Signed in as ${profile.name} (${profile.role})<span class="tenant-chip">tenant: ${profile.tenant}</span>`;
+
+  </script>
+</body>
+</html>

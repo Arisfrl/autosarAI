@@ -1,0 +1,21 @@
+mapping_id,signal_name,service_name,source_protocol,target_protocol,data_type,cycle_time_ms,asil,source_ecu,target_ecu,expected_latency_ms,label,source_ref,notes
+map_0001,WheelSpeed_FL,VehicleMotionService,CAN,SOME/IP,float32,10,D,ECU_WheelSensor,ECU_CentralCompute,15,1,mock,Valid wheel speed mapping
+map_0002,WheelSpeed_FR,VehicleMotionService,CAN,SOME/IP,float32,10,D,ECU_WheelSensor,ECU_CentralCompute,15,1,mock,Valid wheel speed mapping
+map_0003,WheelSpeed_RL,VehicleMotionService,CAN,SOME/IP,float32,10,D,ECU_WheelSensor,ECU_CentralCompute,15,1,mock,Valid wheel speed mapping
+map_0004,WheelSpeed_RR,VehicleMotionService,CAN,SOME/IP,float32,10,D,ECU_WheelSensor,ECU_CentralCompute,15,1,mock,Valid wheel speed mapping
+map_0005,BrakePressure,EmergencyBrakingService,CAN,SOME/IP,float32,5,D,ECU_BrakeClassic,ECU_ADAS,10,1,mock,ASIL-D braking path
+map_0006,SteeringAngle,VehicleDynamicsService,CAN,SOME/IP,float32,10,C,ECU_Chassis,ECU_ADAS,20,1,mock,Chassis control mapping
+map_0007,YawRate,VehicleDynamicsService,CAN,SOME/IP,float32,10,C,ECU_Chassis,ECU_ADAS,20,1,mock,Dynamics feedback
+map_0008,AccelPedalPos,PowertrainControlService,CAN,SOME/IP,float32,20,B,ECU_Powertrain,ECU_CentralCompute,30,1,mock,Powertrain request
+map_0009,EngineSpeed,PowertrainControlService,CAN,SOME/IP,uint16,20,B,ECU_Powertrain,ECU_CentralCompute,30,1,mock,Powertrain telemetry
+map_0010,CabinTemp,HVACService,CAN,SOME/IP,float32,100,A,ECU_Body,ECU_Infotainment,120,1,mock,Comfort domain
+map_0011,DoorLockStatus,VehicleMotionService,CAN,SOME/IP,bool,100,A,ECU_Body,ECU_CentralCompute,50,0,mock,Semantically wrong service
+map_0012,BrakePressure,InfotainmentAudioService,CAN,SOME/IP,float32,5,D,ECU_BrakeClassic,ECU_Infotainment,200,0,mock,Safety critical to infotainment
+map_0013,WheelSpeed_FL,MediaPlaybackService,CAN,SOME/IP,float32,10,D,ECU_WheelSensor,ECU_Infotainment,180,0,mock,Invalid routing target
+map_0014,EngineSpeed,HVACService,CAN,SOME/IP,uint16,20,B,ECU_Powertrain,ECU_Infotainment,130,0,mock,Domain mismatch
+map_0015,BatterySOC,EnergyManagementService,CAN,SOME/IP,float32,100,B,ECU_BMS,ECU_CentralCompute,80,1,mock,Energy service mapping
+map_0016,CellTempMax,EnergyManagementService,CAN,SOME/IP,float32,50,C,ECU_BMS,ECU_CentralCompute,60,1,mock,Battery thermal mapping
+map_0017,RadarObjectList,ObjectPerceptionService,Ethernet,SOME/IP,string,40,C,ECU_Radar,ECU_ADAS,40,1,mock,Perception object stream
+map_0018,CameraLaneModel,ObjectPerceptionService,Ethernet,SOME/IP,string,33,C,ECU_Camera,ECU_ADAS,35,1,mock,Lane model transport
+map_0019,BrakePressure,VehicleMotionService,CAN,SOME/IP,float32,5,D,ECU_BrakeClassic,ECU_CentralCompute,90,0,mock,Latency budget violation
+map_0020,SteeringAngle,PowertrainControlService,CAN,SOME/IP,float32,10,C,ECU_Chassis,ECU_CentralCompute,65,0,mock,Cross-domain mapping not allowed

@@ -1,0 +1,100 @@
+{
+  "started_at": "2026-07-09 17:39:15",
+  "model": "llama3.1",
+  "total": 10,
+  "cases": [
+    {
+      "index": 1,
+      "status": "FAIL",
+      "yaml_len": 0,
+      "arxml_len": 0,
+      "safety_issues": 0,
+      "attempts": 1,
+      "error": "TimeoutExpired: Command '['ollama', 'run', 'llama3.1', 'You are an AUTOSAR automation assistant.\\n\\nUse the reference material below to generate a simplified AUTOSAR architecture in YAML.\\n\\nReturn only the YAML content. Do not add any explanation or markdown fences.\\n\\nFocus on service mapping, signal routing, ECU load distribution, and ASIL-aware safeguards.\\n\\nIf the request mentions Classic CAN and Adaptive SOME/IP, create a bridge section describing the service transformation.\\n\\nUse the following YAML structure: system, ecus, services, signals, safety.\\n\\nReference material:\\n\\n# AUTOSAR Reference Notes\\n\\n## Classic Platform\\n- Classic Platform uses ECUs with AUTOSAR OS, COM, and RTE.\\n- Signals are often bit-packed over CAN and LIN buses.\\n- Traditional communication stacks use PDU, PDUR, COM, and CANIF.\\n\\n## Adaptive Platform\\n- Adaptive Platform uses SOME/IP services, ara::com, and C++14.\\n- Service interfaces are described with service IDs and payload schemas.\\n- Ethernet and IP networking are common.\\n\\n## ISO 26262 Safety\\n- ASIL levels A, B, C, D define functional safety requirements.\\n- Safety mechanisms include redundancy, watchdogs, end-to-end checks, and fault containment.\\n- Safety validation should identify signal routing deadlocks, invalid data paths, and incorrect service partitioning.\\n\\n## RAG Guidance\\n- Retrieval-Augmented Generation uses local reference docs and the user request to ground the model.\\n- Use a simplified YAML abstraction for architecture design, then compile into concrete artifacts.\\n\\n\\nsame text\\n\\nUser request:\\n\\nDesign an AUTOSAR architecture for brake-by-wire with ASIL D safety goals, dual-channel sensing, and independent safety monitoring ECU.\\n\\nProduce YAML with these sections: system, ecus, services, signals, safety. Keep names short and valid.']' timed out after 90 seconds"
+    },
+    {
+      "index": 2,
+      "status": "FAIL",
+      "yaml_len": 0,
+      "arxml_len": 0,
+      "safety_issues": 0,
+      "attempts": 1,
+      "error": "TimeoutExpired: Command '['ollama', 'run', 'llama3.1', 'You are an AUTOSAR automation assistant.\\n\\nUse the reference material below to generate a simplified AUTOSAR architecture in YAML.\\n\\nReturn only the YAML content. Do not add any explanation or markdown fences.\\n\\nFocus on service mapping, signal routing, ECU load distribution, and ASIL-aware safeguards.\\n\\nIf the request mentions Classic CAN and Adaptive SOME/IP, create a bridge section describing the service transformation.\\n\\nUse the following YAML structure: system, ecus, services, signals, safety.\\n\\nReference material:\\n\\n# AUTOSAR Reference Notes\\n\\n## Classic Platform\\n- Classic Platform uses ECUs with AUTOSAR OS, COM, and RTE.\\n- Signals are often bit-packed over CAN and LIN buses.\\n- Traditional communication stacks use PDU, PDUR, COM, and CANIF.\\n\\n## Adaptive Platform\\n- Adaptive Platform uses SOME/IP services, ara::com, and C++14.\\n- Service interfaces are described with service IDs and payload schemas.\\n- Ethernet and IP networking are common.\\n\\n## ISO 26262 Safety\\n- ASIL levels A, B, C, D define functional safety requirements.\\n- Safety mechanisms include redundancy, watchdogs, end-to-end checks, and fault containment.\\n- Safety validation should identify signal routing deadlocks, invalid data paths, and incorrect service partitioning.\\n\\n## RAG Guidance\\n- Retrieval-Augmented Generation uses local reference docs and the user request to ground the model.\\n- Use a simplified YAML abstraction for architecture design, then compile into concrete artifacts.\\n\\n\\nsame text\\n\\nUser request:\\n\\nCreate a steering control system with ASIL decomposition (D -> B+B), including freedom-from-interference strategy and watchdog supervision.\\n\\nProduce YAML with these sections: system, ecus, services, signals, safety. Keep names short and valid.']' timed out after 90 seconds"
+    },
+    {
+      "index": 3,
+      "status": "FAIL",
+      "yaml_len": 0,
+      "arxml_len": 0,
+      "safety_issues": 0,
+      "attempts": 2,
+      "error": "TimeoutExpired: Command '['ollama', 'run', 'llama3.1', 'Fix this AUTOSAR YAML to be syntactically valid.\\n\\nReturn only YAML with top-level keys: system, ecus, services, signals, safety.\\n\\nDo not include markdown or comments.\\n\\nYAML:\\n\\nsystem:\\n  name: Powertrain Controller\\n  description: Fail-operational powertrain controller with degraded torque \\nmode and limp-home behavior\\n\\necus:\\n  - name: PWC_ECU\\n    type: Application ECU\\n    description: Powertrain control unit with safety mechanisms for fail-op\\nfail-operational operation\\n    asil_level: A\\n\\nservices:\\n  - name: PWC_Service\\n    type: Adaptive SOME/IP service\\n    description: Service interface for powertrain control and diagnostic da\\ndata\\n    payload_schema:\\n      torque_mode: float32\\n      engine_speed: uint16\\n      error_code: uint8\\n\\nsignals:\\n  - name: PWC_Torque_Mode\\n    description: Torque mode command from driver input\\n    source_ecu: PWC_ECU\\n    target_ecu: PWC_ECU\\n    routing_protocol: Adaptive SOME/IP\\n\\n  - name: Engine_Speed\\n    description: Engine speed measurement for control and diagnosis\\n    source_ecu: PWC_ECU\\n    target_ecu: PWC_ECU\\n    routing_protocol: Adaptive SOME/IP\\n\\nsignals:\\n  - name: Error_Code\\n    description: Diagnostic error code from sensor or actuator faults\\n    source_ecu: PWC_ECU\\n    target_ecu: PWC_ECU\\n    routing_protocol: Classic CAN\\n\\nsafety:\\n  - mechanism: Watchdog\\n    description: Timer-based watchdog for detecting software hangs and rese\\nresets ECU\\n    asil_level: A\\n  - mechanism: EndToEndCheck\\n    description: Checksum verification for detecting data corruption during\\nduring transmission\\n    asil_level: B']' timed out after 90 seconds"
+    },
+    {
+      "index": 4,
+      "status": "FAIL",
+      "yaml_len": 0,
+      "arxml_len": 0,
+      "safety_issues": 0,
+      "attempts": 1,
+      "error": "TimeoutExpired: Command '['ollama', 'run', 'llama3.1', 'You are an AUTOSAR automation assistant.\\n\\nUse the reference material below to generate a simplified AUTOSAR architecture in YAML.\\n\\nReturn only the YAML content. Do not add any explanation or markdown fences.\\n\\nFocus on service mapping, signal routing, ECU load distribution, and ASIL-aware safeguards.\\n\\nIf the request mentions Classic CAN and Adaptive SOME/IP, create a bridge section describing the service transformation.\\n\\nUse the following YAML structure: system, ecus, services, signals, safety.\\n\\nReference material:\\n\\n# AUTOSAR Reference Notes\\n\\n## Classic Platform\\n- Classic Platform uses ECUs with AUTOSAR OS, COM, and RTE.\\n- Signals are often bit-packed over CAN and LIN buses.\\n- Traditional communication stacks use PDU, PDUR, COM, and CANIF.\\n\\n## Adaptive Platform\\n- Adaptive Platform uses SOME/IP services, ara::com, and C++14.\\n- Service interfaces are described with service IDs and payload schemas.\\n- Ethernet and IP networking are common.\\n\\n## ISO 26262 Safety\\n- ASIL levels A, B, C, D define functional safety requirements.\\n- Safety mechanisms include redundancy, watchdogs, end-to-end checks, and fault containment.\\n- Safety validation should identify signal routing deadlocks, invalid data paths, and incorrect service partitioning.\\n\\n## RAG Guidance\\n- Retrieval-Augmented Generation uses local reference docs and the user request to ground the model.\\n- Use a simplified YAML abstraction for architecture design, then compile into concrete artifacts.\\n\\n\\nsame text\\n\\nUser request:\\n\\nBuild a zonal E/E architecture where safety-critical CAN traffic is protected during Ethernet backbone congestion and gateway faults.\\n\\nProduce YAML with these sections: system, ecus, services, signals, safety. Keep names short and valid.']' timed out after 90 seconds"
+    },
+    {
+      "index": 5,
+      "status": "FAIL",
+      "yaml_len": 0,
+      "arxml_len": 0,
+      "safety_issues": 0,
+      "attempts": 1,
+      "error": "TimeoutExpired: Command '['ollama', 'run', 'llama3.1', 'You are an AUTOSAR automation assistant.\\n\\nUse the reference material below to generate a simplified AUTOSAR architecture in YAML.\\n\\nReturn only the YAML content. Do not add any explanation or markdown fences.\\n\\nFocus on service mapping, signal routing, ECU load distribution, and ASIL-aware safeguards.\\n\\nIf the request mentions Classic CAN and Adaptive SOME/IP, create a bridge section describing the service transformation.\\n\\nUse the following YAML structure: system, ecus, services, signals, safety.\\n\\nReference material:\\n\\n# AUTOSAR Reference Notes\\n\\n## Classic Platform\\n- Classic Platform uses ECUs with AUTOSAR OS, COM, and RTE.\\n- Signals are often bit-packed over CAN and LIN buses.\\n- Traditional communication stacks use PDU, PDUR, COM, and CANIF.\\n\\n## Adaptive Platform\\n- Adaptive Platform uses SOME/IP services, ara::com, and C++14.\\n- Service interfaces are described with service IDs and payload schemas.\\n- Ethernet and IP networking are common.\\n\\n## ISO 26262 Safety\\n- ASIL levels A, B, C, D define functional safety requirements.\\n- Safety mechanisms include redundancy, watchdogs, end-to-end checks, and fault containment.\\n- Safety validation should identify signal routing deadlocks, invalid data paths, and incorrect service partitioning.\\n\\n## RAG Guidance\\n- Retrieval-Augmented Generation uses local reference docs and the user request to ground the model.\\n- Use a simplified YAML abstraction for architecture design, then compile into concrete artifacts.\\n\\n\\nsame text\\n\\nUser request:\\n\\nGenerate an AUTOSAR design for emergency braking (AEB) with sensor plausibility checks, safe-state transitions, and end-to-end safety mechanisms.\\n\\nProduce YAML with these sections: system, ecus, services, signals, safety. Keep names short and valid.']' timed out after 90 seconds"
+    },
+    {
+      "index": 6,
+      "status": "PASS",
+      "yaml_len": 1290,
+      "arxml_len": 1623,
+      "safety_issues": 6,
+      "attempts": 1,
+      "error": ""
+    },
+    {
+      "index": 7,
+      "status": "FAIL",
+      "yaml_len": 0,
+      "arxml_len": 0,
+      "safety_issues": 0,
+      "attempts": 1,
+      "error": "TimeoutExpired: Command '['ollama', 'run', 'llama3.1', 'You are an AUTOSAR automation assistant.\\n\\nUse the reference material below to generate a simplified AUTOSAR architecture in YAML.\\n\\nReturn only the YAML content. Do not add any explanation or markdown fences.\\n\\nFocus on service mapping, signal routing, ECU load distribution, and ASIL-aware safeguards.\\n\\nIf the request mentions Classic CAN and Adaptive SOME/IP, create a bridge section describing the service transformation.\\n\\nUse the following YAML structure: system, ecus, services, signals, safety.\\n\\nReference material:\\n\\n# AUTOSAR Reference Notes\\n\\n## Classic Platform\\n- Classic Platform uses ECUs with AUTOSAR OS, COM, and RTE.\\n- Signals are often bit-packed over CAN and LIN buses.\\n- Traditional communication stacks use PDU, PDUR, COM, and CANIF.\\n\\n## Adaptive Platform\\n- Adaptive Platform uses SOME/IP services, ara::com, and C++14.\\n- Service interfaces are described with service IDs and payload schemas.\\n- Ethernet and IP networking are common.\\n\\n## ISO 26262 Safety\\n- ASIL levels A, B, C, D define functional safety requirements.\\n- Safety mechanisms include redundancy, watchdogs, end-to-end checks, and fault containment.\\n- Safety validation should identify signal routing deadlocks, invalid data paths, and incorrect service partitioning.\\n\\n## RAG Guidance\\n- Retrieval-Augmented Generation uses local reference docs and the user request to ground the model.\\n- Use a simplified YAML abstraction for architecture design, then compile into concrete artifacts.\\n\\n\\nsame text\\n\\nUser request:\\n\\nDesign a safety communication concept with E2E protection profiles, timeout handling, sequence counters, and CRC strategies across ECUs.\\n\\nProduce YAML with these sections: system, ecus, services, signals, safety. Keep names short and valid.']' timed out after 90 seconds"
+    },
+    {
+      "index": 8,
+      "status": "FAIL",
+      "yaml_len": 0,
+      "arxml_len": 0,
+      "safety_issues": 0,
+      "attempts": 1,
+      "error": "TimeoutExpired: Command '['ollama', 'run', 'llama3.1', 'You are an AUTOSAR automation assistant.\\n\\nUse the reference material below to generate a simplified AUTOSAR architecture in YAML.\\n\\nReturn only the YAML content. Do not add any explanation or markdown fences.\\n\\nFocus on service mapping, signal routing, ECU load distribution, and ASIL-aware safeguards.\\n\\nIf the request mentions Classic CAN and Adaptive SOME/IP, create a bridge section describing the service transformation.\\n\\nUse the following YAML structure: system, ecus, services, signals, safety.\\n\\nReference material:\\n\\n# AUTOSAR Reference Notes\\n\\n## Classic Platform\\n- Classic Platform uses ECUs with AUTOSAR OS, COM, and RTE.\\n- Signals are often bit-packed over CAN and LIN buses.\\n- Traditional communication stacks use PDU, PDUR, COM, and CANIF.\\n\\n## Adaptive Platform\\n- Adaptive Platform uses SOME/IP services, ara::com, and C++14.\\n- Service interfaces are described with service IDs and payload schemas.\\n- Ethernet and IP networking are common.\\n\\n## ISO 26262 Safety\\n- ASIL levels A, B, C, D define functional safety requirements.\\n- Safety mechanisms include redundancy, watchdogs, end-to-end checks, and fault containment.\\n- Safety validation should identify signal routing deadlocks, invalid data paths, and incorrect service partitioning.\\n\\n## RAG Guidance\\n- Retrieval-Augmented Generation uses local reference docs and the user request to ground the model.\\n- Use a simplified YAML abstraction for architecture design, then compile into concrete artifacts.\\n\\n\\nsame text\\n\\nUser request:\\n\\nModel an ADAS lane-keeping function with safety monitor arbitration, fallback to warning-only mode, and diagnostic event logging.\\n\\nProduce YAML with these sections: system, ecus, services, signals, safety. Keep names short and valid.']' timed out after 90 seconds"
+    },
+    {
+      "index": 9,
+      "status": "FAIL",
+      "yaml_len": 0,
+      "arxml_len": 0,
+      "safety_issues": 0,
+      "attempts": 1,
+      "error": "TimeoutExpired: Command '['ollama', 'run', 'llama3.1', 'You are an AUTOSAR automation assistant.\\n\\nUse the reference material below to generate a simplified AUTOSAR architecture in YAML.\\n\\nReturn only the YAML content. Do not add any explanation or markdown fences.\\n\\nFocus on service mapping, signal routing, ECU load distribution, and ASIL-aware safeguards.\\n\\nIf the request mentions Classic CAN and Adaptive SOME/IP, create a bridge section describing the service transformation.\\n\\nUse the following YAML structure: system, ecus, services, signals, safety.\\n\\nReference material:\\n\\n# AUTOSAR Reference Notes\\n\\n## Classic Platform\\n- Classic Platform uses ECUs with AUTOSAR OS, COM, and RTE.\\n- Signals are often bit-packed over CAN and LIN buses.\\n- Traditional communication stacks use PDU, PDUR, COM, and CANIF.\\n\\n## Adaptive Platform\\n- Adaptive Platform uses SOME/IP services, ara::com, and C++14.\\n- Service interfaces are described with service IDs and payload schemas.\\n- Ethernet and IP networking are common.\\n\\n## ISO 26262 Safety\\n- ASIL levels A, B, C, D define functional safety requirements.\\n- Safety mechanisms include redundancy, watchdogs, end-to-end checks, and fault containment.\\n- Safety validation should identify signal routing deadlocks, invalid data paths, and incorrect service partitioning.\\n\\n## RAG Guidance\\n- Retrieval-Augmented Generation uses local reference docs and the user request to ground the model.\\n- Use a simplified YAML abstraction for architecture design, then compile into concrete artifacts.\\n\\n\\nsame text\\n\\nUser request:\\n\\nBuild a central diagnostics and safety evidence pipeline that maps faults to safety goals, ASIL levels, and confirmation tests.\\n\\nProduce YAML with these sections: system, ecus, services, signals, safety. Keep names short and valid.']' timed out after 90 seconds"
+    },
+    {
+      "index": 10,
+      "status": "FAIL",
+      "yaml_len": 0,
+      "arxml_len": 0,
+      "safety_issues": 0,
+      "attempts": 1,
+      "error": "TimeoutExpired: Command '['ollama', 'run', 'llama3.1', 'You are an AUTOSAR automation assistant.\\n\\nUse the reference material below to generate a simplified AUTOSAR architecture in YAML.\\n\\nReturn only the YAML content. Do not add any explanation or markdown fences.\\n\\nFocus on service mapping, signal routing, ECU load distribution, and ASIL-aware safeguards.\\n\\nIf the request mentions Classic CAN and Adaptive SOME/IP, create a bridge section describing the service transformation.\\n\\nUse the following YAML structure: system, ecus, services, signals, safety.\\n\\nReference material:\\n\\n# AUTOSAR Reference Notes\\n\\n## Classic Platform\\n- Classic Platform uses ECUs with AUTOSAR OS, COM, and RTE.\\n- Signals are often bit-packed over CAN and LIN buses.\\n- Traditional communication stacks use PDU, PDUR, COM, and CANIF.\\n\\n## Adaptive Platform\\n- Adaptive Platform uses SOME/IP services, ara::com, and C++14.\\n- Service interfaces are described with service IDs and payload schemas.\\n- Ethernet and IP networking are common.\\n\\n## ISO 26262 Safety\\n- ASIL levels A, B, C, D define functional safety requirements.\\n- Safety mechanisms include redundancy, watchdogs, end-to-end checks, and fault containment.\\n- Safety validation should identify signal routing deadlocks, invalid data paths, and incorrect service partitioning.\\n\\n## RAG Guidance\\n- Retrieval-Augmented Generation uses local reference docs and the user request to ground the model.\\n- Use a simplified YAML abstraction for architecture design, then compile into concrete artifacts.\\n\\n\\nsame text\\n\\nUser request:\\n\\nCreate a mixed Classic + Adaptive architecture where a safety island supervises SOME/IP services and enforces safe fallback on service failure.\\n\\nProduce YAML with these sections: system, ecus, services, signals, safety. Keep names short and valid.']' timed out after 90 seconds"
+    }
+  ],
+  "pass_count": 1,
+  "fail_count": 9,
+  "ended_at": "2026-07-09 17:55:32"
+}

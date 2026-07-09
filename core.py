@@ -2,11 +2,14 @@ import re
 import shutil
 import subprocess
 import sys
+import os
 import hashlib
 import threading
 import json
+import pickle
 import urllib.error
 import urllib.request
+import urllib.parse
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -20,8 +23,23 @@ from pypdf import PdfReader
 
 BASE_DIR = Path(__file__).resolve().parent
 DEMO_BASELINE_PATH = BASE_DIR / "data" / "demo_validation_baseline.json"
+MAPPING_BASELINE_MODEL_PATH = BASE_DIR / "models" / "gnn_mapping_baseline.pkl"
 _EMBEDDING_FUNCTION = None
 _EMBEDDING_FUNCTION_LOCK = threading.Lock()
+
+DEFAULT_CHUNK_SIZE = 1200
+DEFAULT_CHUNK_OVERLAP = 180
+MAX_PROMPT_REFERENCE_CHARS = 3200
+MAX_PROMPT_CHUNK_CHARS = 700
+
+
+def _strip_ansi_and_controls(text: str) -> str:
+    cleaned = text or ""
+    # Remove ANSI escape sequences and spinner control noise from CLI output.
+    cleaned = re.sub(r"\x1b\[[0-9;?]*[ -/]*[@-~]", "", cleaned)
+    cleaned = re.sub(r"\x1b\][^\x07]*(?:\x07|\x1b\\)", "", cleaned)
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", cleaned)
+    return cleaned.strip()
 
 
 def _get_embedding_function():
@@ -185,9 +203,59 @@ def _simple_retrieve(query: str, docs: List[Dict[str, str]], top_k: int = 2) -> 
     return [text for _, text in scored[:top_k] if _ > 0]
 
 
+def _chunk_text(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_CHUNK_OVERLAP) -> List[str]:
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return []
+    if len(cleaned) <= chunk_size:
+        return [cleaned]
+
+    pieces = [piece.strip() for piece in re.split(r"\n\s*\n", cleaned) if piece.strip()]
+    chunks: List[str] = []
+    buffer = ""
+    for piece in pieces:
+        if not buffer:
+            buffer = piece
+            continue
+        candidate = f"{buffer}\n\n{piece}"
+        if len(candidate) <= chunk_size:
+            buffer = candidate
+            continue
+        chunks.append(buffer)
+        tail = buffer[-overlap:] if overlap > 0 else ""
+        buffer = f"{tail}\n\n{piece}" if tail else piece
+
+    if buffer:
+        chunks.append(buffer)
+
+    # Fallback for very long single paragraphs.
+    normalized: List[str] = []
+    stride = max(1, chunk_size - overlap)
+    for chunk in chunks:
+        if len(chunk) <= chunk_size:
+            normalized.append(chunk)
+            continue
+        for start in range(0, len(chunk), stride):
+            section = chunk[start:start + chunk_size].strip()
+            if section:
+                normalized.append(section)
+
+    return normalized
+
+
 class AutosarHackathonEngine:
-    def __init__(self, model_name: str = "llama3.1", top_k: int = 3, load_pdfs: bool = False, tenant_id: str = "public"):
+    def __init__(
+        self,
+        model_name: str = "llama3.1",
+        top_k: int = 3,
+        load_pdfs: bool = False,
+        tenant_id: str = "public",
+        model_provider: str = "ollama",
+        api_key: Optional[str] = None,
+    ):
         self.model_name = model_name
+        self.model_provider = (model_provider or "ollama").strip().lower()
+        self.api_key = (api_key or os.environ.get("GEMINI_API_KEY", "")).strip()
         self.docs = _load_reference_documents(load_pdfs=load_pdfs)
         tenant_id = (tenant_id or "public").strip().lower()
         self.tenant_id = re.sub(r"[^a-z0-9_-]+", "_", tenant_id) or "public"
@@ -201,6 +269,10 @@ class AutosarHackathonEngine:
         self.vector_warmup_error: Optional[str] = None
         self.last_retrieved: List[str] = []
         self.last_prompt: str = ""
+        self.retrieval_cache: Dict[str, List[str]] = {}
+        self.mapping_baseline_model = None
+        self.mapping_baseline_error: Optional[str] = None
+        self.last_mapping_assessment: List[Dict[str, object]] = []
         self.demo_baseline = self._load_demo_validation_baseline()
 
     def _load_demo_validation_baseline(self) -> Dict[str, object]:
@@ -288,6 +360,28 @@ class AutosarHackathonEngine:
     def _doc_id(doc: Dict[str, str]) -> str:
         return hashlib.sha1(AutosarHackathonEngine._doc_key(doc).encode("utf-8")).hexdigest()
 
+    @staticmethod
+    def _chunk_id(source_name: str, chunk_index: int, chunk_text: str) -> str:
+        key = f"{source_name}::{chunk_index}::{chunk_text}"
+        return hashlib.sha1(key.encode("utf-8")).hexdigest()
+
+    def _prepare_chunk_records(self, docs: List[Dict[str, str]]) -> List[Dict[str, object]]:
+        records: List[Dict[str, object]] = []
+        for doc in docs:
+            name = str(doc.get("name", "unknown"))
+            text = str(doc.get("text", ""))
+            chunks = _chunk_text(text)
+            total = len(chunks)
+            for idx, chunk in enumerate(chunks):
+                records.append(
+                    {
+                        "id": self._chunk_id(name, idx, chunk),
+                        "metadata": {"source": name, "chunk_index": idx, "chunk_total": total},
+                        "document": chunk,
+                    }
+                )
+        return records
+
     def _build_vector_store(self, docs: List[Dict[str, str]]):
         persist_dir = BASE_DIR / "chroma_db" / self.tenant_id
         persist_dir.mkdir(exist_ok=True)
@@ -301,10 +395,11 @@ class AutosarHackathonEngine:
         )
 
         if collection.count() == 0 and docs:
+            chunk_records = self._prepare_chunk_records(docs)
             collection.upsert(
-                ids=[self._doc_id(doc) for doc in docs],
-                metadatas=[{"source": doc["name"]} for doc in docs],
-                documents=[doc["text"] for doc in docs],
+                ids=[record["id"] for record in chunk_records],
+                metadatas=[record["metadata"] for record in chunk_records],
+                documents=[record["document"] for record in chunk_records],
             )
         return collection
 
@@ -338,22 +433,32 @@ class AutosarHackathonEngine:
             return {"added": 0, "already_present": already_present}
 
         self.docs.extend(new_docs)
+        self.retrieval_cache.clear()
         if self.vector_store is not None:
+            chunk_records = self._prepare_chunk_records(new_docs)
             self.vector_store.upsert(
-                ids=[self._doc_id(doc) for doc in new_docs],
-                metadatas=[{"source": doc["name"]} for doc in new_docs],
-                documents=[doc["text"] for doc in new_docs],
+                ids=[record["id"] for record in chunk_records],
+                metadatas=[record["metadata"] for record in chunk_records],
+                documents=[record["document"] for record in chunk_records],
             )
         return {"added": len(new_docs), "already_present": already_present}
 
     def _retrieve_documents(self, query: str, use_vector: bool = True) -> List[str]:
+        cache_key = f"{int(use_vector)}::{query.strip().lower()}"
+        cached = self.retrieval_cache.get(cache_key)
+        if cached is not None:
+            self.last_retrieved = cached
+            return cached
+
         if use_vector:
             vector_store = self._ensure_vector_store()
-            result = vector_store.query(query_texts=[query], n_results=self.top_k)
+            result = vector_store.query(query_texts=[query], n_results=max(self.top_k * 3, self.top_k))
             documents = result.get("documents", [[]])[0]
             self.last_retrieved = [doc for doc in documents if doc]
+            self.retrieval_cache[cache_key] = self.last_retrieved
             return self.last_retrieved
         self.last_retrieved = _simple_retrieve(query, self.docs, self.top_k)
+        self.retrieval_cache[cache_key] = self.last_retrieved
         return self.last_retrieved
 
     def retrieve_documents(self, query: str, use_vector: bool = True) -> List[str]:
@@ -377,6 +482,18 @@ class AutosarHackathonEngine:
         return examples.get(use_case, examples["can_to_someip"])
 
     def _build_prompt(self, user_request: str, retrieved_docs: List[str]) -> str:
+        compact_references: List[str] = []
+        used_chars = 0
+        for index, doc in enumerate(retrieved_docs or [], start=1):
+            excerpt = (doc or "").strip()
+            if len(excerpt) > MAX_PROMPT_CHUNK_CHARS:
+                excerpt = excerpt[:MAX_PROMPT_CHUNK_CHARS].rstrip() + " ..."
+            candidate = f"Reference chunk {index}:\n{excerpt}"
+            if used_chars + len(candidate) > MAX_PROMPT_REFERENCE_CHARS:
+                break
+            compact_references.append(candidate)
+            used_chars += len(candidate)
+
         prompt = [
             "You are an AUTOSAR automation assistant.",
             "Use the reference material below to generate a simplified AUTOSAR architecture in YAML.",
@@ -386,7 +503,7 @@ class AutosarHackathonEngine:
             "Use the following YAML structure: system, ecus, services, signals, safety.",
             "Reference material:",
         ]
-        prompt.extend(retrieved_docs or ["(no reference material available)"])
+        prompt.extend(compact_references or ["(no reference material available)"])
         prompt.append("User request:")
         prompt.append(user_request.strip())
         prompt.append(
@@ -451,10 +568,124 @@ class AutosarHackathonEngine:
                 ) from exc
             raise
         if result.returncode != 0:
+            raw_error = result.stderr.strip() or result.stdout.strip()
+            clean_error = _strip_ansi_and_controls(raw_error)
+            error_lower = clean_error.lower()
+
+            if "pull model manifest: file does not exist" in error_lower:
+                raise RuntimeError(
+                    "Ollama model was not found. Set a valid model name (for example, llama3.1) "
+                    "and run `ollama pull <model>` first."
+                )
+
             raise RuntimeError(
-                f"Ollama inference failed: {result.stderr.strip() or result.stdout.strip()}"
+                f"Ollama inference failed: {clean_error or 'unknown CLI error'}"
             )
         return result.stdout.strip()
+
+    def _call_gemini(self, prompt: str) -> str:
+        api_key = (self.api_key or "").strip()
+        if not api_key:
+            raise RuntimeError(
+                "Gemini API key is missing. Provide it in the UI or set GEMINI_API_KEY."
+            )
+
+        model = (self.model_name or "gemini-2.0-flash").strip()
+        if model.startswith("models/"):
+            model = model.split("/", 1)[1]
+        encoded_model = urllib.parse.quote(model, safe="")
+        endpoint = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/{encoded_model}:generateContent"
+            f"?key={urllib.parse.quote(api_key, safe='')}"
+        )
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.2,
+                "topP": 0.9,
+                "maxOutputTokens": 2048,
+            },
+        }
+        request = urllib.request.Request(
+            endpoint,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=180) as response:
+                body = response.read().decode("utf-8", errors="replace")
+            data = json.loads(body)
+        except urllib.error.HTTPError as exc:
+            details = exc.read().decode("utf-8", errors="replace") if hasattr(exc, "read") else str(exc)
+            details_lower = details.lower()
+            if exc.code == 404 and "listmodels" in details_lower:
+                suggestions = self._list_gemini_models(api_key)
+                if suggestions:
+                    hint = ", ".join(suggestions[:6])
+                    raise RuntimeError(
+                        "Gemini model is not available for this API key/version. "
+                        f"Try one of: {hint}"
+                    ) from exc
+                raise RuntimeError(
+                    "Gemini model is not available for this API key/version. "
+                    "Use a currently supported model such as gemini-2.0-flash."
+                ) from exc
+            raise RuntimeError(f"Gemini request failed: {details}") from exc
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"Gemini request failed: {exc}") from exc
+
+        candidates = data.get("candidates") or []
+        if not candidates:
+            raise RuntimeError("Gemini returned no candidates.")
+
+        parts = candidates[0].get("content", {}).get("parts", [])
+        text_response = "\n".join(str(part.get("text", "")) for part in parts if part.get("text"))
+        text_response = text_response.strip()
+        if not text_response:
+            raise RuntimeError("Gemini returned an empty response.")
+        return text_response
+
+    def _list_gemini_models(self, api_key: str) -> List[str]:
+        endpoint = (
+            "https://generativelanguage.googleapis.com/v1beta/models"
+            f"?key={urllib.parse.quote(api_key, safe='')}"
+        )
+        request = urllib.request.Request(endpoint, method="GET")
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                body = response.read().decode("utf-8", errors="replace")
+            data = json.loads(body)
+        except Exception:
+            return []
+
+        names: List[str] = []
+        for item in data.get("models", []):
+            if not isinstance(item, dict):
+                continue
+            methods = item.get("supportedGenerationMethods", []) or []
+            if "generateContent" not in methods:
+                continue
+            name = str(item.get("name", "")).strip()
+            if name.startswith("models/"):
+                name = name.split("/", 1)[1]
+            if name:
+                names.append(name)
+
+        # Preserve order while removing duplicates.
+        seen = set()
+        deduped = []
+        for name in names:
+            if name in seen:
+                continue
+            seen.add(name)
+            deduped.append(name)
+        return deduped
+
+    def _call_model(self, prompt: str) -> str:
+        if self.model_provider == "gemini":
+            return self._call_gemini(prompt)
+        return self._call_ollama(prompt)
 
     def generate_simplified_structure_fallback(self, user_request: str) -> str:
         """
@@ -488,7 +719,7 @@ safety:
         retrieved_docs = self._retrieve_documents(user_request, use_vector_retrieval)
         prompt = self._build_prompt(user_request, retrieved_docs)
         self.last_prompt = prompt
-        return self._extract_yaml_payload(self._call_ollama(prompt))
+        return self._extract_yaml_payload(self._call_model(prompt))
 
     def get_last_prompt(self) -> str:
         return self.last_prompt
@@ -569,7 +800,7 @@ safety:
 
         return yaml.safe_dump(spec, sort_keys=False, allow_unicode=True)
 
-    def compile_to_arxml(self, yaml_text: str) -> str:
+    def compile_to_arxml(self, yaml_text: str, use_mapping_precheck: bool = True) -> str:
         data = self._parse_yaml_spec(yaml_text)
 
         data.setdefault("system", {})
@@ -577,6 +808,24 @@ safety:
         data.setdefault("services", [])
         data.setdefault("signals", [])
         data.setdefault("safety", [])
+
+        if use_mapping_precheck:
+            mapping_assessment = self._assess_mapping_features(data)
+            high_risk = [
+                item
+                for item in mapping_assessment
+                if item.get("prediction") == 0 and (item.get("confidence") or 0.0) >= 0.65
+            ]
+            if high_risk:
+                sample = ", ".join(
+                    f"{item.get('signal_name', 'signal')}->{item.get('service_name', 'service')}"
+                    for item in high_risk[:3]
+                )
+                raise ValueError(
+                    "ML mapping pre-check blocked compile for "
+                    f"{len(high_risk)} high-risk mapping(s): {sample}. "
+                    "Adjust mappings or run safety review before compiling."
+                )
 
         template = self.template_env.get_template("arxml_template.xml.j2")
         return template.render(spec=data)
@@ -604,7 +853,191 @@ safety:
         alias_keys = ["processor", "hardware", "platform", "cpu", "soc", "node"]
         return any(str(ecu.get(key, "")).strip() for key in alias_keys)
 
-    def safety_check_report(self, yaml_text: str) -> Dict[str, object]:
+    @staticmethod
+    def _to_float(value, default: float) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _load_mapping_baseline_model(self):
+        if self.mapping_baseline_model is not None:
+            return self.mapping_baseline_model
+        if self.mapping_baseline_error is not None:
+            return None
+        if not MAPPING_BASELINE_MODEL_PATH.exists():
+            self.mapping_baseline_error = f"Model not found at {MAPPING_BASELINE_MODEL_PATH}"
+            return None
+
+        try:
+            with MAPPING_BASELINE_MODEL_PATH.open("rb") as f:
+                self.mapping_baseline_model = pickle.load(f)
+            self.mapping_baseline_error = None
+        except Exception as exc:
+            self.mapping_baseline_model = None
+            self.mapping_baseline_error = str(exc)
+        return self.mapping_baseline_model
+
+    def _build_mapping_feature_rows(self, spec: Dict[str, object]) -> List[Dict[str, object]]:
+        services = spec.get("services", []) if isinstance(spec.get("services", []), list) else []
+        signals = spec.get("signals", []) if isinstance(spec.get("signals", []), list) else []
+        ecus = spec.get("ecus", []) if isinstance(spec.get("ecus", []), list) else []
+
+        source_ecu_default = "ECU_SourceDomain"
+        target_ecu_default = "ECU_CentralCompute"
+        asil_default = "B"
+
+        ecu_names = []
+        for ecu in ecus:
+            if not isinstance(ecu, dict):
+                continue
+            name = str(ecu.get("name", "")).strip()
+            if name:
+                ecu_names.append(name)
+            asil = str(ecu.get("asil", "")).strip()
+            if asil:
+                asil_default = asil
+
+        if ecu_names:
+            source_ecu_default = ecu_names[0]
+            target_ecu_default = ecu_names[1] if len(ecu_names) > 1 else ecu_names[0]
+
+        rows: List[Dict[str, object]] = []
+        for signal in signals:
+            if not isinstance(signal, dict):
+                continue
+
+            signal_name = (
+                str(signal.get("name", "")).strip()
+                or str(signal.get("signal", "")).strip()
+                or str(signal.get("short_name", "")).strip()
+                or str(signal.get("source", "")).strip()
+                or "UnknownSignal"
+            )
+            target_service_name = (
+                str(signal.get("service_name", "")).strip()
+                or str(signal.get("service", "")).strip()
+                or str(signal.get("target_service", "")).strip()
+            )
+
+            selected_services = []
+            if target_service_name:
+                for service in services:
+                    if not isinstance(service, dict):
+                        continue
+                    service_name = (
+                        str(service.get("name", "")).strip()
+                        or str(service.get("service", "")).strip()
+                        or str(service.get("short_name", "")).strip()
+                    )
+                    if service_name and service_name == target_service_name:
+                        selected_services.append(service)
+
+            if not selected_services and services and isinstance(services[0], dict):
+                selected_services = [services[0]]
+            if not selected_services:
+                selected_services = [{}]
+
+            for service in selected_services:
+                service_name = (
+                    str(service.get("name", "")).strip()
+                    or str(service.get("service", "")).strip()
+                    or str(service.get("short_name", "")).strip()
+                    or target_service_name
+                    or "UnknownService"
+                )
+                source_protocol = (
+                    str(signal.get("source_protocol", "")).strip()
+                    or str(signal.get("source", "")).strip()
+                    or "CAN"
+                )
+                target_protocol = (
+                    str(service.get("protocol", "")).strip()
+                    or str(signal.get("target_protocol", "")).strip()
+                    or str(signal.get("destination", "")).strip()
+                    or "SOME/IP"
+                )
+                data_type = (
+                    str(signal.get("data_type", "")).strip()
+                    or str(service.get("data_type", "")).strip()
+                    or "float32"
+                )
+                cycle_time_ms = self._to_float(signal.get("cycle_time_ms"), 10.0)
+                asil = (
+                    str(signal.get("asil", "")).strip()
+                    or str(service.get("asil", "")).strip()
+                    or asil_default
+                )
+                source_ecu = (
+                    str(signal.get("source_ecu", "")).strip()
+                    or str(signal.get("ecu", "")).strip()
+                    or source_ecu_default
+                )
+                target_ecu = (
+                    str(signal.get("target_ecu", "")).strip()
+                    or str(service.get("target_ecu", "")).strip()
+                    or target_ecu_default
+                )
+                expected_latency_ms = self._to_float(
+                    signal.get("expected_latency_ms") or service.get("expected_latency_ms"),
+                    30.0,
+                )
+
+                rows.append(
+                    {
+                        "signal_name": signal_name,
+                        "service_name": service_name,
+                        "source_protocol": source_protocol,
+                        "target_protocol": target_protocol,
+                        "data_type": data_type,
+                        "cycle_time_ms": cycle_time_ms,
+                        "asil": asil,
+                        "source_ecu": source_ecu,
+                        "target_ecu": target_ecu,
+                        "expected_latency_ms": expected_latency_ms,
+                    }
+                )
+        return rows
+
+    def _assess_mapping_features(self, spec: Dict[str, object]) -> List[Dict[str, object]]:
+        model = self._load_mapping_baseline_model()
+        if model is None:
+            self.last_mapping_assessment = []
+            return []
+
+        feature_rows = self._build_mapping_feature_rows(spec)
+        if not feature_rows:
+            self.last_mapping_assessment = []
+            return []
+
+        try:
+            predictions = model.predict(feature_rows)
+            probabilities = model.predict_proba(feature_rows) if hasattr(model, "predict_proba") else None
+        except Exception as exc:
+            self.mapping_baseline_error = str(exc)
+            self.last_mapping_assessment = []
+            return []
+
+        assessments: List[Dict[str, object]] = []
+        for index, row in enumerate(feature_rows):
+            prediction = int(predictions[index])
+            confidence = None
+            if probabilities is not None:
+                confidence = float(probabilities[index][prediction])
+            assessments.append(
+                {
+                    "signal_name": row.get("signal_name", ""),
+                    "service_name": row.get("service_name", ""),
+                    "prediction": prediction,
+                    "label": "valid_mapping" if prediction == 1 else "invalid_or_unsafe_mapping",
+                    "confidence": confidence,
+                }
+            )
+
+        self.last_mapping_assessment = assessments
+        return assessments
+
+    def safety_check_report(self, yaml_text: str, use_mapping_check: bool = True) -> Dict[str, object]:
         report: Dict[str, object] = {
             "score": 100,
             "summary": "Safety checks passed",
@@ -711,6 +1144,30 @@ safety:
         else:
             add_finding("info", f"Found {len(safety_items)} safety checklist item(s).")
 
+        if use_mapping_check:
+            mapping_assessment = self._assess_mapping_features(spec)
+            if mapping_assessment:
+                invalid_predictions = [item for item in mapping_assessment if item.get("prediction") == 0]
+                low_confidence = [
+                    item
+                    for item in mapping_assessment
+                    if item.get("confidence") is not None and float(item.get("confidence", 0.0)) < 0.6
+                ]
+
+                if invalid_predictions:
+                    add_finding(
+                        "warning",
+                        f"ML mapping check flagged {len(invalid_predictions)} potential invalid mapping(s); review signal-to-service alignment.",
+                    )
+                else:
+                    add_finding("info", "ML mapping check did not detect invalid mappings.")
+
+                if low_confidence:
+                    add_finding(
+                        "warning",
+                        f"ML mapping check found {len(low_confidence)} low-confidence mapping(s); manual review recommended.",
+                    )
+
         yaml_lower = yaml_text.lower()
         if re.search(r"\bmissing\b|\bundefined\b|\bunsupported\b", yaml_lower):
             add_finding("warning", "Design text contains unresolved terms (missing/undefined/unsupported).")
@@ -738,8 +1195,8 @@ safety:
 
         return report
 
-    def safety_check(self, yaml_text: str) -> List[str]:
-        report = self.safety_check_report(yaml_text)
+    def safety_check(self, yaml_text: str, use_mapping_check: bool = True) -> List[str]:
+        report = self.safety_check_report(yaml_text, use_mapping_check=use_mapping_check)
         findings = report.get("findings", [])
         return [
             f"[{item.get('severity', 'info').upper()}] {item.get('message', '')}"

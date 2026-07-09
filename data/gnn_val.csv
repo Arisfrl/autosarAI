@@ -1,0 +1,5 @@
+mapping_id,signal_name,service_name,source_protocol,target_protocol,data_type,cycle_time_ms,asil,source_ecu,target_ecu,expected_latency_ms,label,source_ref,notes
+map_0012,BrakePressure,InfotainmentAudioService,CAN,SOME/IP,float32,5,D,ECU_BrakeClassic,ECU_Infotainment,200,0,mock,Safety critical to infotainment
+pub_0004,VehicleSpeed,VehicleMotionService,Ethernet,SOME/IP,float32,10,B,ECU_SourceDomain,ECU_CentralCompute,30,1,covesa_vsomeip_readme,Public-source-derived weak label
+map_0008,AccelPedalPos,PowertrainControlService,CAN,SOME/IP,float32,20,B,ECU_Powertrain,ECU_CentralCompute,30,1,mock,Powertrain request
+map_0005,BrakePressure,EmergencyBrakingService,CAN,SOME/IP,float32,5,D,ECU_BrakeClassic,ECU_ADAS,10,1,mock,ASIL-D braking path

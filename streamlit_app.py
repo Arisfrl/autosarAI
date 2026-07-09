@@ -6,15 +6,21 @@
 
 
 import threading
+import subprocess
+import importlib
+import urllib.request
+import urllib.parse
 from pathlib import Path
 from urllib.parse import quote
 import json
 import hashlib
 import binascii
+import inspect
 from datetime import datetime, timezone
 
 import streamlit as st
 
+import core as core_module
 from core import AutosarHackathonEngine, _parse_autosar_arxml_text
 
 
@@ -62,6 +68,102 @@ def _audit_log(tenant: str, username: str, role: str, action: str, details: dict
 
 def _warmup_vector_store(engine: AutosarHackathonEngine) -> None:
     engine.warm_up_vector_store()
+
+
+def _create_engine(model_name: str, tenant_id: str, model_provider: str, api_key: str) -> AutosarHackathonEngine:
+    engine_class = AutosarHackathonEngine
+    try:
+        reloaded = importlib.reload(core_module)
+        engine_class = getattr(reloaded, "AutosarHackathonEngine", AutosarHackathonEngine)
+    except Exception:
+        engine_class = AutosarHackathonEngine
+
+    kwargs = {
+        "model_name": model_name,
+        "load_pdfs": False,
+        "tenant_id": tenant_id,
+    }
+    try:
+        params = inspect.signature(engine_class).parameters
+        if "model_provider" in params:
+            kwargs["model_provider"] = model_provider
+        if "api_key" in params:
+            kwargs["api_key"] = api_key
+    except (TypeError, ValueError):
+        pass
+    return engine_class(**kwargs)
+
+
+def _list_ollama_models() -> list[str]:
+    try:
+        result = subprocess.run(
+            ["ollama", "list"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=12,
+        )
+    except Exception:
+        return []
+
+    if result.returncode != 0:
+        return []
+
+    lines = [line.strip() for line in (result.stdout or "").splitlines() if line.strip()]
+    if len(lines) <= 1:
+        return []
+
+    model_names: list[str] = []
+    for line in lines[1:]:
+        parts = line.split()
+        if not parts:
+            continue
+        name = parts[0].strip()
+        if name and name.lower() != "name":
+            model_names.append(name)
+    return model_names
+
+
+def _list_gemini_models(api_key: str) -> list[str]:
+    token = (api_key or "").strip()
+    if not token:
+        return []
+
+    endpoint = (
+        "https://generativelanguage.googleapis.com/v1beta/models"
+        f"?key={urllib.parse.quote(token, safe='')}"
+    )
+    request = urllib.request.Request(endpoint, method="GET")
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            body = response.read().decode("utf-8", errors="replace")
+        payload = json.loads(body)
+    except Exception:
+        return []
+
+    model_names: list[str] = []
+    for item in payload.get("models", []):
+        if not isinstance(item, dict):
+            continue
+        methods = item.get("supportedGenerationMethods", []) or []
+        if "generateContent" not in methods:
+            continue
+        name = str(item.get("name", "")).strip()
+        if name.startswith("models/"):
+            name = name.split("/", 1)[1]
+        if name:
+            model_names.append(name)
+
+    # Preserve order while removing duplicates.
+    seen = set()
+    ordered = []
+    for name in model_names:
+        if name in seen:
+            continue
+        seen.add(name)
+        ordered.append(name)
+    return ordered
 
 
 def _svg_file_to_data_uri(file_path: Path) -> str:
@@ -339,13 +441,18 @@ st.caption(
 
 if "model_name" not in st.session_state:
     st.session_state.model_name = "llama3.1"
+if "model_provider" not in st.session_state:
+    st.session_state.model_provider = "ollama"
+if "gemini_api_key" not in st.session_state:
+    st.session_state.gemini_api_key = ""
 if (
     "engine" not in st.session_state
     or not hasattr(st.session_state.engine, "add_reference_documents")
 ):
-    st.session_state.engine = AutosarHackathonEngine(
+    st.session_state.engine = _create_engine(
         model_name=st.session_state.model_name,
-        load_pdfs=False,
+        model_provider=st.session_state.model_provider,
+        api_key=st.session_state.gemini_api_key,
         tenant_id=auth_ctx["tenant"],
     )
 engine = st.session_state.engine
@@ -382,6 +489,8 @@ if "vector_warmup_error" not in st.session_state:
     st.session_state.vector_warmup_error = ""
 if "vector_warmup_thread" not in st.session_state:
     st.session_state.vector_warmup_thread = None
+if "use_mapping_precheck" not in st.session_state:
+    st.session_state.use_mapping_precheck = True
 
 if engine.is_vector_store_ready():
     st.session_state.vector_warmup_done = True
@@ -400,25 +509,112 @@ if (
 
 with st.sidebar:
     st.header("Controls")
-    st.markdown("Upload AUTOSAR ARXML reference files and run local Ollama generation.")
-    model_name = st.text_input("Ollama model", st.session_state.model_name)
-    if st.button("Reload model"):
+    st.markdown("Upload AUTOSAR ARXML reference files and run model generation.")
+    provider_choice = st.selectbox(
+        "Model provider",
+        options=["ollama", "gemini"],
+        index=0 if st.session_state.model_provider == "ollama" else 1,
+        format_func=lambda value: value.capitalize(),
+    )
+    st.session_state.model_provider = provider_choice
+
+    if provider_choice == "gemini":
+        st.session_state.gemini_api_key = st.text_input(
+            "Gemini API key",
+            value=st.session_state.gemini_api_key,
+            type="password",
+            help="Stored only in this Streamlit session unless you set GEMINI_API_KEY.",
+        )
+
+        recommended = [
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite",
+        ]
+        available_models = _list_gemini_models(st.session_state.gemini_api_key)
+
+        # Keep recommended models first when available, then append remaining discovered models.
+        ordered_models = [name for name in recommended if name in available_models]
+        ordered_models.extend([name for name in available_models if name not in ordered_models])
+        if not ordered_models:
+            ordered_models = recommended
+
+        gemini_choices = ordered_models + ["Custom..."]
+        initial_model = (st.session_state.model_name or ordered_models[0]).strip()
+        default_choice = initial_model if initial_model in ordered_models else "Custom..."
+        selected_gemini_model = st.selectbox(
+            "Gemini model",
+            options=gemini_choices,
+            index=gemini_choices.index(default_choice),
+            help="Auto-filtered to models supporting generateContent when API key is provided.",
+        )
+        if selected_gemini_model == "Custom...":
+            model_name = st.text_input(
+                "Custom Gemini model",
+                value=initial_model,
+            )
+        else:
+            model_name = selected_gemini_model
+
+        if st.button("Refresh Gemini models"):
+            st.rerun()
+    else:
+        ollama_models = _list_ollama_models()
+        current_model = (st.session_state.model_name or "llama3.1:latest").strip()
+        ollama_choices = ollama_models + ["Custom..."] if ollama_models else ["Custom..."]
+        default_choice = current_model if current_model in ollama_models else "Custom..."
+        selected_ollama_model = st.selectbox(
+            "Ollama model",
+            options=ollama_choices,
+            index=ollama_choices.index(default_choice),
+            help="Auto-detected from local ollama list.",
+        )
+        if selected_ollama_model == "Custom...":
+            model_name = st.text_input(
+                "Custom Ollama model",
+                value=current_model,
+                help="Enter a model tag exactly as shown by ollama list.",
+            )
+        else:
+            model_name = selected_ollama_model
+        if st.button("Refresh Ollama models"):
+            st.rerun()
+
+    if st.button("Reload model settings"):
         st.session_state.model_name = model_name.strip() or "llama3.1"
-        st.session_state.engine = AutosarHackathonEngine(
+        st.session_state.engine = _create_engine(
             model_name=st.session_state.model_name,
-            load_pdfs=False,
+            model_provider=st.session_state.model_provider,
+            api_key=st.session_state.gemini_api_key,
             tenant_id=auth_ctx["tenant"],
         )
-        _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "reload_model", {"model": st.session_state.model_name})
+        _audit_log(
+            auth_ctx["tenant"],
+            auth_ctx["username"],
+            auth_ctx["role"],
+            "reload_model",
+            {
+                "model": st.session_state.model_name,
+                "provider": st.session_state.model_provider,
+            },
+        )
         engine = st.session_state.engine
         st.session_state.vector_warmup_started = False
         st.session_state.vector_warmup_done = False
         st.session_state.vector_warmup_error = ""
         st.session_state.vector_warmup_thread = None
-        st.success(f"Reloaded model: {st.session_state.model_name}")
+        st.success(
+            f"Reloaded {st.session_state.model_provider} model: {st.session_state.model_name}"
+        )
     st.session_state.auto_warmup = st.checkbox(
         "Warm retrieval model in background",
         value=st.session_state.auto_warmup,
+    )
+    st.session_state.use_mapping_precheck = st.checkbox(
+        "Enable ML mapping pre-check",
+        value=st.session_state.use_mapping_precheck,
+        help="When enabled, compile/safety includes baseline ML checks for signal-to-service mappings.",
     )
     if st.button("Warm up retrieval model now"):
         with st.spinner("Warming retrieval model..."):
@@ -450,6 +646,11 @@ with st.sidebar:
         st.caption("Retrieval model status: not warmed yet")
     if st.button("Load TempSensor demo prompt"):
         st.session_state.user_request = "Create a Software Component named TempSensor with a sender port CurrentTemp of type float32."
+    if st.button("Load AEB demo prompt"):
+        st.session_state.user_request = (
+            "Generate an AUTOSAR design for emergency braking (AEB) with sensor plausibility checks, "
+            "safe-state transitions, and end-to-end safety mechanisms."
+        )
     if st.button("Load CAN→SOME/IP demo prompt"):
         st.session_state.user_request = engine.get_example_prompt("can_to_someip")
     if st.button("Compare retrieval modes"):
@@ -478,9 +679,10 @@ if st.sidebar.button("Reset uploaded references"):
     st.session_state.reference_ingest_status = ""
     st.session_state.vector_docs = []
     st.session_state.keyword_docs = []
-    st.session_state.engine = AutosarHackathonEngine(
+    st.session_state.engine = _create_engine(
         model_name=st.session_state.model_name,
-        load_pdfs=False,
+        model_provider=st.session_state.model_provider,
+        api_key=st.session_state.gemini_api_key,
         tenant_id=auth_ctx["tenant"],
     )
     _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "reset_uploaded_references", {})
@@ -502,15 +704,66 @@ with st.expander("Loaded AUTOSAR reference files"):
 col1, col2 = st.columns([2, 1])
 with col1:
     st.subheader("1. Natural language request")
+    st.caption(
+        f"Active runtime model: {getattr(engine, 'model_provider', 'ollama')} / {getattr(engine, 'model_name', st.session_state.model_name)}"
+    )
+    if st.session_state.use_mapping_precheck:
+        st.caption("ML pre-check: ON")
+    else:
+        st.caption("ML pre-check: OFF")
     user_request = st.text_area("Describe the AUTOSAR component or gateway behavior", value=st.session_state.user_request, height=180)
     st.session_state.user_request = user_request
 
     st.subheader("2. Generate simplified AUTOSAR YAML")
     use_vector = st.checkbox("Use Chroma vector retrieval", value=True)
     show_raw_prompt = st.checkbox("Show raw Ollama prompt", value=False)
-    allow_fallback = st.checkbox("Allow fallback if Ollama is unavailable", value=True)
+    fallback_label = (
+        "Allow fallback if Gemini is unavailable"
+        if st.session_state.model_provider == "gemini"
+        else "Allow fallback if Ollama is unavailable"
+    )
+    allow_fallback = st.checkbox(fallback_label, value=True)
     if st.button("Generate YAML"):
-        with st.spinner("Running local Ollama inference..."):
+        if st.session_state.model_provider == "ollama":
+            installed_models = _list_ollama_models()
+            selected_model = (st.session_state.model_name or "").strip()
+            if installed_models and selected_model not in installed_models:
+                st.error(
+                    "Selected Ollama model is not installed locally. "
+                    "Pick a model from the dropdown or run `ollama pull <model>` first."
+                )
+                _audit_log(
+                    auth_ctx["tenant"],
+                    auth_ctx["username"],
+                    auth_ctx["role"],
+                    "generate_yaml_failed",
+                    {
+                        "error": "ollama_model_not_installed",
+                        "model": selected_model,
+                        "mode": st.session_state.model_provider,
+                    },
+                )
+                st.stop()
+
+        active_provider = getattr(engine, "model_provider", "ollama")
+        active_model = getattr(engine, "model_name", "")
+        active_api_key = getattr(engine, "api_key", "")
+        provider_mismatch = active_provider != st.session_state.model_provider
+        model_mismatch = active_model != st.session_state.model_name
+        api_key_mismatch = (
+            st.session_state.model_provider == "gemini"
+            and (active_api_key or "") != (st.session_state.gemini_api_key or "")
+        )
+        if provider_mismatch or model_mismatch or api_key_mismatch:
+            st.session_state.engine = _create_engine(
+                model_name=st.session_state.model_name,
+                model_provider=st.session_state.model_provider,
+                api_key=st.session_state.gemini_api_key,
+                tenant_id=auth_ctx["tenant"],
+            )
+            engine = st.session_state.engine
+
+        with st.spinner("Running model inference..."):
             reference_docs = st.session_state.uploaded_docs if st.session_state.uploaded_docs else None
             if reference_docs:
                 ingest_result = engine.add_reference_documents(reference_docs)
@@ -525,16 +778,49 @@ with col1:
                 yaml_data = engine.generate_simplified_structure(user_request, use_vector_retrieval=use_vector)
                 st.session_state.yaml_data = yaml_data
                 st.session_state.last_prompt = engine.get_last_prompt()
-                _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "generate_yaml", {"use_vector": use_vector, "prompt_len": len(user_request or ""), "mode": "ollama"})
+                _audit_log(
+                    auth_ctx["tenant"],
+                    auth_ctx["username"],
+                    auth_ctx["role"],
+                    "generate_yaml",
+                    {
+                        "use_vector": use_vector,
+                        "prompt_len": len(user_request or ""),
+                        "mode": st.session_state.model_provider,
+                        "model": st.session_state.model_name,
+                    },
+                )
             except Exception as exc:
                 if allow_fallback:
-                    st.warning(f"Ollama generation failed ({exc}). Using deterministic fallback YAML.")
+                    st.warning(f"Model generation failed ({exc}). Using deterministic fallback YAML.")
                     st.session_state.yaml_data = engine.generate_simplified_structure_fallback(user_request)
                     st.session_state.last_prompt = ""
-                    _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "generate_yaml_fallback", {"error": str(exc), "prompt_len": len(user_request or "")})
+                    _audit_log(
+                        auth_ctx["tenant"],
+                        auth_ctx["username"],
+                        auth_ctx["role"],
+                        "generate_yaml_fallback",
+                        {
+                            "error": str(exc),
+                            "prompt_len": len(user_request or ""),
+                            "mode": st.session_state.model_provider,
+                            "model": st.session_state.model_name,
+                        },
+                    )
                 else:
                     st.error(f"YAML generation failed: {exc}")
-                    _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "generate_yaml_failed", {"error": str(exc), "prompt_len": len(user_request or "")})
+                    _audit_log(
+                        auth_ctx["tenant"],
+                        auth_ctx["username"],
+                        auth_ctx["role"],
+                        "generate_yaml_failed",
+                        {
+                            "error": str(exc),
+                            "prompt_len": len(user_request or ""),
+                            "mode": st.session_state.model_provider,
+                            "model": st.session_state.model_name,
+                        },
+                    )
 
     if st.session_state.reference_ingest_status:
         st.caption(st.session_state.reference_ingest_status)
@@ -568,8 +854,35 @@ if st.button("Compile ARXML"):
         st.warning("Generate YAML first.")
     else:
         with st.spinner("Compiling YAML to ARXML..."):
-            st.session_state.arxml_output = engine.compile_to_arxml(st.session_state.yaml_data)
-            _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "compile_arxml", {"yaml_len": len(st.session_state.yaml_data or "")})
+            try:
+                st.session_state.arxml_output = engine.compile_to_arxml(
+                    st.session_state.yaml_data,
+                    use_mapping_precheck=st.session_state.use_mapping_precheck,
+                )
+                _audit_log(
+                    auth_ctx["tenant"],
+                    auth_ctx["username"],
+                    auth_ctx["role"],
+                    "compile_arxml",
+                    {
+                        "yaml_len": len(st.session_state.yaml_data or ""),
+                        "use_mapping_precheck": st.session_state.use_mapping_precheck,
+                    },
+                )
+            except Exception as exc:
+                st.session_state.arxml_output = ""
+                st.error(f"Compile failed: {exc}")
+                _audit_log(
+                    auth_ctx["tenant"],
+                    auth_ctx["username"],
+                    auth_ctx["role"],
+                    "compile_arxml_failed",
+                    {
+                        "yaml_len": len(st.session_state.yaml_data or ""),
+                        "error": str(exc),
+                        "use_mapping_precheck": st.session_state.use_mapping_precheck,
+                    },
+                )
 
 if st.session_state.arxml_output:
     st.code(st.session_state.arxml_output, language="xml")
@@ -580,8 +893,17 @@ if st.button("Run safety check"):
     if not st.session_state.yaml_data:
         st.warning("Generate YAML first.")
     else:
-        issues = engine.safety_check(st.session_state.yaml_data)
-        _audit_log(auth_ctx["tenant"], auth_ctx["username"], auth_ctx["role"], "run_safety_check", {"issue_count": len(issues)})
+        issues = engine.safety_check(
+            st.session_state.yaml_data,
+            use_mapping_check=st.session_state.use_mapping_precheck,
+        )
+        _audit_log(
+            auth_ctx["tenant"],
+            auth_ctx["username"],
+            auth_ctx["role"],
+            "run_safety_check",
+            {"issue_count": len(issues), "use_mapping_precheck": st.session_state.use_mapping_precheck},
+        )
         if issues:
             st.error("Safety issues found")
             for issue in issues:
@@ -590,7 +912,7 @@ if st.button("Run safety check"):
             st.success("No high-level safety issues detected.")
 
 st.markdown("---")
-st.markdown("#### Notes\n- Upload ARXML files on the sidebar to use them as reference material.\n- Generated ARXML is a simplified demonstration output.\n- The app uses local Ollama via the `ollama` CLI.")
+st.markdown("#### Notes\n- Upload ARXML files on the sidebar to use them as reference material.\n- Generated ARXML is a simplified demonstration output.\n- Choose model provider in the sidebar (Ollama or Gemini).")
 
 
 

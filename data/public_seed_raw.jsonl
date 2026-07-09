@@ -1,0 +1,4 @@
+{"source": "cogu_autosar_readme", "url": "https://raw.githubusercontent.com/cogu/autosar/master/README.md", "signal_candidates": [], "service_candidates": ["Methods", "SenderReceiverInterface", "NvDataInterface", "ParameterInterface", "ClientServerInterface", "ModeSwitchInterface", "Events"]}
+{"source": "covesa_vsomeip_readme", "url": "https://raw.githubusercontent.com/COVESA/vsomeip/master/README.md", "signal_candidates": [], "service_candidates": []}
+{"source": "commaai_opendbc_readme", "url": "https://raw.githubusercontent.com/commaai/opendbc/master/README.md", "signal_candidates": ["Lane_departure_warning_system", "Lane_keeping_and_next_technologies"], "service_candidates": []}
+{"source": "autosar_site_home", "url": "https://www.autosar.org/", "error": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1028)>"}

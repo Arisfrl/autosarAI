@@ -1,0 +1,6 @@
+mapping_id,signal_name,service_name,source_protocol,target_protocol,data_type,cycle_time_ms,asil,source_ecu,target_ecu,expected_latency_ms,label,source_ref,notes
+map_0004,WheelSpeed_RR,VehicleMotionService,CAN,SOME/IP,float32,10,D,ECU_WheelSensor,ECU_CentralCompute,15,1,mock,Valid wheel speed mapping
+pub_0007,Lane_departure_warning_system,VehicleMotionService,CAN,SOME/IP,float32,10,B,ECU_SourceDomain,ECU_CentralCompute,30,1,commaai_opendbc_readme,Public-source-derived weak label
+map_0001,WheelSpeed_FL,VehicleMotionService,CAN,SOME/IP,float32,10,D,ECU_WheelSensor,ECU_CentralCompute,15,1,mock,Valid wheel speed mapping
+map_0009,EngineSpeed,PowertrainControlService,CAN,SOME/IP,uint16,20,B,ECU_Powertrain,ECU_CentralCompute,30,1,mock,Powertrain telemetry
+map_0019,BrakePressure,VehicleMotionService,CAN,SOME/IP,float32,5,D,ECU_BrakeClassic,ECU_CentralCompute,90,0,mock,Latency budget violation

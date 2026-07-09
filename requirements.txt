@@ -6,3 +6,4 @@ jinja2
 pyyaml
 sentence-transformers
 pypdf
+scikit-learn

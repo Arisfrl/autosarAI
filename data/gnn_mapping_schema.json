@@ -1,0 +1,95 @@
+{
+  "version": "1.0",
+  "description": "Seed schema for Signal-to-Service mapping used in GNN link prediction.",
+  "target_task": "binary_link_prediction",
+  "label_definition": {
+    "0": "invalid_or_unsafe_mapping",
+    "1": "valid_mapping"
+  },
+  "fields": [
+    {
+      "name": "mapping_id",
+      "type": "string",
+      "required": true,
+      "example": "map_0001"
+    },
+    {
+      "name": "signal_name",
+      "type": "string",
+      "required": true,
+      "example": "WheelSpeed_FL"
+    },
+    {
+      "name": "service_name",
+      "type": "string",
+      "required": true,
+      "example": "VehicleMotionService"
+    },
+    {
+      "name": "source_protocol",
+      "type": "string",
+      "required": true,
+      "allowed_values": ["CAN", "LIN", "FlexRay", "Ethernet"]
+    },
+    {
+      "name": "target_protocol",
+      "type": "string",
+      "required": true,
+      "allowed_values": ["SOME/IP", "DDS", "DoIP", "CAN"]
+    },
+    {
+      "name": "data_type",
+      "type": "string",
+      "required": true,
+      "allowed_values": ["uint8", "uint16", "uint32", "int16", "int32", "float32", "bool", "string"]
+    },
+    {
+      "name": "cycle_time_ms",
+      "type": "number",
+      "required": true,
+      "example": 10
+    },
+    {
+      "name": "asil",
+      "type": "string",
+      "required": true,
+      "allowed_values": ["QM", "A", "B", "C", "D"]
+    },
+    {
+      "name": "source_ecu",
+      "type": "string",
+      "required": true,
+      "example": "ECU_BrakeClassic"
+    },
+    {
+      "name": "target_ecu",
+      "type": "string",
+      "required": true,
+      "example": "ECU_CentralCompute"
+    },
+    {
+      "name": "expected_latency_ms",
+      "type": "number",
+      "required": true,
+      "example": 20
+    },
+    {
+      "name": "label",
+      "type": "integer",
+      "required": true,
+      "allowed_values": [0, 1]
+    },
+    {
+      "name": "source_ref",
+      "type": "string",
+      "required": false,
+      "example": "AUTOSAR_WorkflowExample/EcuSystemDescription/swc/WheelSpeedSensor_SWCD.arxml"
+    },
+    {
+      "name": "notes",
+      "type": "string",
+      "required": false,
+      "example": "Valid map with ASIL-D braking path"
+    }
+  ]
+}
