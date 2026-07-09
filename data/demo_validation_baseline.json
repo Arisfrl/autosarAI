@@ -1,0 +1,187 @@
+{
+  "baseline_profiles": {
+    "default": {
+      "default_asil": "B",
+      "default_processor": "Generic_MCU",
+      "services": [
+        {
+          "name": "TelemetrySomeIpService",
+          "protocol": "SOME/IP",
+          "description": "Baseline Adaptive telemetry service"
+        },
+        {
+          "name": "DiagnosticsSomeIpService",
+          "protocol": "SOME/IP",
+          "description": "Baseline diagnostic request/response"
+        },
+        {
+          "name": "PowertrainStatusService",
+          "protocol": "SOME/IP",
+          "description": "Publishes powertrain state snapshots"
+        }
+      ],
+      "signals": [
+        {
+          "name": "CabinTemp_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "linear_scale"
+        },
+        {
+          "name": "BatterySoc_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "normalize_percentage"
+        },
+        {
+          "name": "VehicleSpeed_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "raw_to_kph"
+        }
+      ],
+      "safety": [
+        {
+          "check": "watchdog_supervision",
+          "note": "Task watchdog active"
+        },
+        {
+          "check": "timeout_fallback",
+          "note": "Fallback state on comm timeout"
+        }
+      ]
+    },
+    "bmw": {
+      "default_asil": "C",
+      "default_processor": "BMW_GW_SoC",
+      "services": [
+        {
+          "name": "BmwDriveModeService",
+          "protocol": "SOME/IP",
+          "description": "Drive mode state and transitions"
+        },
+        {
+          "name": "BmwThermalService",
+          "protocol": "SOME/IP",
+          "description": "Thermal control and coolant targets"
+        },
+        {
+          "name": "BmwAdasHealthService",
+          "protocol": "SOME/IP",
+          "description": "ADAS health and degraded-mode flags"
+        },
+        {
+          "name": "BmwEnergyFlowService",
+          "protocol": "SOME/IP",
+          "description": "HV battery and recuperation telemetry"
+        }
+      ],
+      "signals": [
+        {
+          "name": "BmwCoolantTemp_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "degC_filter"
+        },
+        {
+          "name": "BmwSteeringAngle_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "signed_angle_deg"
+        },
+        {
+          "name": "BmwHvBatteryCurrent_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "ampere_scale"
+        },
+        {
+          "name": "BmwBrakePressure_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "bar_scale"
+        }
+      ],
+      "safety": [
+        {
+          "check": "asil_partitioning",
+          "note": "ASIL separation policy applied"
+        },
+        {
+          "check": "service_timeout_guard",
+          "note": "Timeout guard for high-priority services"
+        },
+        {
+          "check": "sensor_plausibility",
+          "note": "Cross-check steering and speed signals"
+        }
+      ]
+    },
+    "ford": {
+      "default_asil": "B",
+      "default_processor": "FORD_GW_MCU",
+      "services": [
+        {
+          "name": "FordPowertrainService",
+          "protocol": "SOME/IP",
+          "description": "Engine torque and drivetrain state"
+        },
+        {
+          "name": "FordBodyControlService",
+          "protocol": "SOME/IP",
+          "description": "Body control status and commands"
+        },
+        {
+          "name": "FordVehicleHealthService",
+          "protocol": "SOME/IP",
+          "description": "Fault and health aggregation"
+        },
+        {
+          "name": "FordCabinComfortService",
+          "protocol": "SOME/IP",
+          "description": "HVAC and comfort telemetry"
+        }
+      ],
+      "signals": [
+        {
+          "name": "FordEngineSpeed_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "rpm_scale"
+        },
+        {
+          "name": "FordDoorStatus_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "bitfield_decode"
+        },
+        {
+          "name": "FordFuelLevel_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "percentage_scale"
+        },
+        {
+          "name": "FordAmbientTemp_CAN",
+          "source": "CAN",
+          "destination": "SOME/IP",
+          "transform": "degC_scale"
+        }
+      ],
+      "safety": [
+        {
+          "check": "degraded_mode_fallback",
+          "note": "Fallback strategy when critical signals drop"
+        },
+        {
+          "check": "gateway_heartbeat",
+          "note": "Gateway heartbeat monitor"
+        },
+        {
+          "check": "input_range_validation",
+          "note": "Bounds check on CAN decoded signals"
+        }
+      ]
+    }
+  }
+}
