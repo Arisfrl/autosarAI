@@ -10,6 +10,9 @@ import subprocess
 import importlib
 import urllib.request
 import urllib.parse
+import base64
+import hmac
+import os
 from pathlib import Path
 from urllib.parse import quote
 import json
@@ -19,6 +22,7 @@ import inspect
 from datetime import datetime, timezone
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 import core as core_module
 from core import AutosarHackathonEngine, _parse_autosar_arxml_text
@@ -29,6 +33,15 @@ st.set_page_config(page_title="AUTOSAR AI MDE", layout="wide")
 BASE_DIR = Path(__file__).resolve().parent
 AUTH_FILE = BASE_DIR / "config" / "auth_users.json"
 AUDIT_DIR = BASE_DIR / "audit"
+AUTH_SESSION_TTL_SECONDS = 8 * 60 * 60
+
+
+def _auth_secret() -> str:
+    env_secret = (os.getenv("AUTOSAR_AUTH_SECRET") or "").strip()
+    if env_secret:
+        return env_secret
+    # Local-development fallback; set AUTOSAR_AUTH_SECRET in production.
+    return "autosar_ai_mde_auth_secret_v1"
 
 
 def _load_auth_users():
@@ -64,6 +77,77 @@ def _audit_log(tenant: str, username: str, role: str, action: str, details: dict
     logfile = AUDIT_DIR / f"{tenant}_audit.jsonl"
     with logfile.open("a", encoding="utf-8") as f:
         f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
+def _create_auth_token(auth_payload: dict) -> str:
+    payload_json = json.dumps(auth_payload, separators=(",", ":"), ensure_ascii=False)
+    payload_b64 = base64.urlsafe_b64encode(payload_json.encode("utf-8")).decode("utf-8").rstrip("=")
+    signature = hmac.new(
+        _auth_secret().encode("utf-8"),
+        payload_b64.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"{payload_b64}.{signature}"
+
+
+def _verify_auth_token(token: str) -> dict | None:
+    token = (token or "").strip()
+    if not token or "." not in token:
+        return None
+    payload_b64, received_sig = token.rsplit(".", 1)
+    expected_sig = hmac.new(
+        _auth_secret().encode("utf-8"),
+        payload_b64.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(expected_sig, received_sig):
+        return None
+    try:
+        padded = payload_b64 + ("=" * (-len(payload_b64) % 4))
+        payload_json = base64.urlsafe_b64decode(padded.encode("utf-8")).decode("utf-8")
+        payload = json.loads(payload_json)
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    expires_at = int(payload.get("exp", 0) or 0)
+    now_ts = int(datetime.now(timezone.utc).timestamp())
+    if expires_at <= now_ts:
+        return None
+    return payload
+
+
+def _clear_auth_session() -> None:
+    st.session_state.auth = {
+        "is_authenticated": False,
+        "username": "",
+        "display_name": "",
+        "tenant": "",
+        "role": "",
+    }
+    for state_key in [
+        "engine",
+        "yaml_data",
+        "arxml_output",
+        "vector_docs",
+        "keyword_docs",
+        "uploaded_docs",
+        "last_prompt",
+        "reference_ingest_status",
+    ]:
+        if state_key in st.session_state:
+            del st.session_state[state_key]
+    if "auth" in st.query_params:
+        del st.query_params["auth"]
+    if "action" in st.query_params:
+        del st.query_params["action"]
+
+
+def _get_query_param_str(name: str) -> str:
+    value = st.query_params.get(name, "")
+    if isinstance(value, list):
+        return str(value[0]).strip() if value else ""
+    return str(value).strip()
 
 
 def _warmup_vector_store(engine: AutosarHackathonEngine) -> None:
@@ -169,6 +253,15 @@ def _list_gemini_models(api_key: str) -> list[str]:
 def _svg_file_to_data_uri(file_path: Path) -> str:
     svg_text = file_path.read_text(encoding="utf-8")
     return f"data:image/svg+xml,{quote(svg_text, safe='')}"
+
+
+def _avatar_initials(display_name: str) -> str:
+    parts = [p for p in (display_name or "").strip().split() if p]
+    if not parts:
+        return "AU"
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return f"{parts[0][0]}{parts[-1][0]}".upper()
 
 
 slide_1_uri = _svg_file_to_data_uri(BASE_DIR / "static" / "autosar_slide_1.svg")
@@ -364,8 +457,6 @@ hero_html = (
     .replace("__SLIDE3__", slide_3_uri)
 )
 
-st.markdown(hero_html, unsafe_allow_html=True)
-
 auth_users = _load_auth_users()
 if "auth" not in st.session_state:
     st.session_state.auth = {
@@ -376,12 +467,76 @@ if "auth" not in st.session_state:
         "role": "",
     }
 
+requested_action = _get_query_param_str("action").lower()
+if requested_action == "signout":
+    prior_auth = st.session_state.get("auth", {})
+    if prior_auth.get("is_authenticated"):
+        _audit_log(
+            prior_auth.get("tenant", "unknown"),
+            prior_auth.get("username", "unknown"),
+            prior_auth.get("role", "unknown"),
+            "logout",
+            {"source": "main_menu"},
+        )
+    _clear_auth_session()
+    st.rerun()
+
 if not st.session_state.auth.get("is_authenticated"):
+    auth_token = _get_query_param_str("auth")
+    restored = _verify_auth_token(auth_token) if auth_token else None
+    if restored:
+        restored_username = str(restored.get("username", "")).strip()
+        rec = auth_users.get(restored_username)
+        if rec:
+            st.session_state.auth = {
+                "is_authenticated": True,
+                "username": restored_username,
+                "display_name": rec.get("display_name", restored_username),
+                "tenant": rec.get("tenant", "public"),
+                "role": rec.get("role", "viewer"),
+            }
+            _audit_log(
+                rec.get("tenant", "public"),
+                restored_username,
+                rec.get("role", "viewer"),
+                "session_restored",
+                {},
+            )
+        else:
+            if "auth" in st.query_params:
+                del st.query_params["auth"]
+    elif auth_token:
+        if "auth" in st.query_params:
+            del st.query_params["auth"]
+
+if not st.session_state.auth.get("is_authenticated"):
+    st.markdown(hero_html, unsafe_allow_html=True)
     st.subheader("Company Login")
-    with st.form("login_form", clear_on_submit=False):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Sign in")
+    st.markdown(
+        """
+        <style>
+        .login-note {
+            margin-top: 0.2rem;
+            margin-bottom: 0.8rem;
+            color: #294966;
+            font-size: 0.95rem;
+        }
+        @media (max-width: 840px) {
+            .autosar-hero {
+                padding: 18px 16px 16px;
+            }
+        }
+        </style>
+        <div class="login-note">Use your company credentials to access the AUTOSAR AI MDE Console.</div>
+        """,
+        unsafe_allow_html=True,
+    )
+    _, login_col, _ = st.columns([1, 2, 1])
+    with login_col:
+        with st.form("login_form", clear_on_submit=False):
+            username = st.text_input("Username", help="Enter your company username")
+            password = st.text_input("Password", type="password", help="Enter your account password")
+            submitted = st.form_submit_button("Sign in")
     if submitted:
         rec = auth_users.get(username)
         if rec and _verify_password(password, rec):
@@ -392,6 +547,15 @@ if not st.session_state.auth.get("is_authenticated"):
                 "tenant": rec.get("tenant", "public"),
                 "role": rec.get("role", "viewer"),
             }
+            expires_at = int(datetime.now(timezone.utc).timestamp()) + AUTH_SESSION_TTL_SECONDS
+            st.query_params["auth"] = _create_auth_token(
+                {
+                    "username": username,
+                    "tenant": rec.get("tenant", "public"),
+                    "role": rec.get("role", "viewer"),
+                    "exp": expires_at,
+                }
+            )
             _audit_log(
                 rec.get("tenant", "public"),
                 username,
@@ -406,43 +570,180 @@ if not st.session_state.auth.get("is_authenticated"):
     st.stop()
 
 auth_ctx = st.session_state.auth
+st.markdown(
+    """
+    <style>
+    .topbar-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 10px 0 6px;
+    }
+    .topbar-title {
+        color: #0f2942;
+        font-weight: 800;
+        letter-spacing: 0.1px;
+        font-size: clamp(1.05rem, 0.95rem + 0.8vw, 1.38rem);
+    }
+    .profile-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: flex-end;
+        width: 100%;
+        border: 1px solid #c9dbf8;
+        background: #f5f9ff;
+        border-radius: 999px;
+        padding: 7px 12px;
+        color: #0f2942;
+    }
+    .avatar-circle {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background: #1f5ea9;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+    .profile-text {
+        font-size: 0.84rem;
+        line-height: 1.2;
+        text-align: right;
+    }
+    .tenant-badge {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid #9fc1ef;
+        background: #e8f2ff;
+        font-size: 0.73rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        color: #143a60;
+    }
+    @media (max-width: 900px) {
+        .topbar-wrap {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .profile-chip {
+            justify-content: flex-start;
+            border-radius: 12px;
+        }
+        .profile-text {
+            text-align: left;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-tenant_label = (auth_ctx.get("tenant") or "").strip().upper()
-if tenant_label:
+profile_initials = _avatar_initials(auth_ctx.get("display_name", ""))
+profile_line = (
+    f"Signed in as {auth_ctx['display_name']} ({auth_ctx['role']})"
+    f" | tenant: {auth_ctx['tenant']}"
+)
+
+left_col, right_col = st.columns([2.8, 2.2])
+with left_col:
+    st.markdown('<div class="topbar-wrap"><div class="topbar-title">AUTOSAR AI MDE Console</div></div>', unsafe_allow_html=True)
+with right_col:
     st.markdown(
         f"""
-        <style>
-        .tenant-watermark {{
-            position: fixed;
-            top: 12px;
-            left: 14px;
-            z-index: 9999;
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: 1px solid rgba(31, 94, 169, 0.35);
-            background: rgba(255, 255, 255, 0.86);
-            color: #0f2942;
-            font-size: 0.74rem;
-            font-weight: 700;
-            letter-spacing: 0.7px;
-            text-transform: uppercase;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 3px 12px rgba(14, 53, 92, 0.12);
-        }}
-        </style>
-        <div class="tenant-watermark">{tenant_label}</div>
+        <div class="topbar-wrap">
+            <div class="profile-chip" aria-label="Signed-in profile information">
+                <span class="avatar-circle" aria-hidden="true">{profile_initials}</span>
+                <span class="profile-text">{profile_line}<span class="tenant-badge">{auth_ctx['tenant']}</span></span>
+            </div>
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
-st.caption(
-    f"Signed in as {auth_ctx['display_name']} ({auth_ctx['role']}) | tenant: {auth_ctx['tenant']}"
+components.html(
+        """
+        <script>
+        (function () {
+            const parentDoc = window.parent.document;
+            const MENU_SELECTOR = 'div[data-testid="stMainMenuList"][role="menu"][aria-label="Main menu"]';
+            const ITEM_ID = 'stMainMenuItem-signOutCustom';
+            const DIVIDER_ID = 'stMainMenuDivider-signOutCustom';
+
+            function signOutUrl() {
+                const url = new URL(window.parent.location.href);
+                url.searchParams.set('action', 'signout');
+                return url.toString();
+            }
+
+            function ensureSignOutItem() {
+                const menu = parentDoc.querySelector(MENU_SELECTOR);
+                if (!menu || menu.querySelector('#' + ITEM_ID)) {
+                    return;
+                }
+
+                const templateItem = menu.querySelector('button[role="menuitem"][data-testid^="stMainMenuItem-"]');
+                if (!templateItem) {
+                    return;
+                }
+
+                const templateDivider = menu.querySelector('div[data-testid="stMainMenuDivider"]');
+                if (templateDivider && !menu.querySelector('#' + DIVIDER_ID)) {
+                    const divider = templateDivider.cloneNode(true);
+                    divider.id = DIVIDER_ID;
+                    menu.appendChild(divider);
+                }
+
+                const item = parentDoc.createElement('a');
+                item.id = ITEM_ID;
+                item.setAttribute('data-testid', 'stMainMenuItem-signOut');
+                item.setAttribute('role', 'menuitem');
+                item.setAttribute('aria-label', 'Sign out');
+                item.setAttribute('href', signOutUrl());
+                item.tabIndex = -1;
+                item.className = templateItem.className;
+                item.innerHTML = templateItem.innerHTML;
+
+                const accelerator = item.querySelector('kbd');
+                if (accelerator) {
+                    accelerator.remove();
+                }
+
+                const label = item.querySelector('[data-testid="stMainMenuItemLabel"]');
+                if (label) {
+                    label.textContent = 'Sign out';
+                } else {
+                    item.textContent = 'Sign out';
+                }
+
+                menu.appendChild(item);
+            }
+
+            ensureSignOutItem();
+
+            const observer = new MutationObserver(function () {
+                ensureSignOutItem();
+            });
+            observer.observe(parentDoc.body, { childList: true, subtree: true });
+        })();
+        </script>
+        """,
+        height=0,
 )
 
+st.markdown(hero_html, unsafe_allow_html=True)
+
 if "model_name" not in st.session_state:
-    st.session_state.model_name = "llama3.1"
+    st.session_state.model_name = "gemini-2.5-flash"
 if "model_provider" not in st.session_state:
-    st.session_state.model_provider = "ollama"
+    st.session_state.model_provider = "gemini"
 if "gemini_api_key" not in st.session_state:
     st.session_state.gemini_api_key = ""
 if (
@@ -542,6 +843,8 @@ with st.sidebar:
 
         gemini_choices = ordered_models + ["Custom..."]
         initial_model = (st.session_state.model_name or ordered_models[0]).strip()
+        if available_models and initial_model not in ordered_models:
+            initial_model = ordered_models[0]
         default_choice = initial_model if initial_model in ordered_models else "Custom..."
         selected_gemini_model = st.selectbox(
             "Gemini model",
@@ -582,7 +885,12 @@ with st.sidebar:
             st.rerun()
 
     if st.button("Reload model settings"):
-        st.session_state.model_name = model_name.strip() or "llama3.1"
+        fallback_model = (
+            "gemini-2.5-flash"
+            if st.session_state.model_provider == "gemini"
+            else "llama3.1"
+        )
+        st.session_state.model_name = model_name.strip() or fallback_model
         st.session_state.engine = _create_engine(
             model_name=st.session_state.model_name,
             model_provider=st.session_state.model_provider,

@@ -27,3 +27,30 @@
 {"timestamp": "2026-07-09T20:34:23.614231+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "gemini", "model": "gemini-2.5-flash"}}
 {"timestamp": "2026-07-09T20:34:31.363647+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 274, "use_mapping_precheck": true}}
 {"timestamp": "2026-07-09T20:34:44.874099+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "run_safety_check", "details": {"issue_count": 7, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T20:39:38.099088+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T20:39:49.781833+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "reload_model", "details": {"model": "gemini-2.5-flash", "provider": "gemini"}}
+{"timestamp": "2026-07-09T20:40:03.891505+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "gemini", "model": "gemini-2.5-flash"}}
+{"timestamp": "2026-07-09T20:44:19.897521+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T20:49:18.003571+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T20:49:23.144390+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T20:50:08.544431+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T20:51:21.880007+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T20:51:43.790097+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "reload_model", "details": {"model": "gemini-2.5-flash", "provider": "gemini"}}
+{"timestamp": "2026-07-09T20:52:06.432649+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 145, "mode": "gemini", "model": "gemini-2.5-flash"}}
+{"timestamp": "2026-07-09T20:52:15.592773+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 250, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T20:57:49.385447+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T21:00:10.244724+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:00:58.168196+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:01:20.115603+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "logout", "details": {"source": "main_menu"}}
+{"timestamp": "2026-07-09T21:01:42.687375+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T21:04:41.476162+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:05:10.977351+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:06:07.532514+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:06:44.965388+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:07:23.390936+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:09:20.611672+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:09:56.837839+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:10:28.615504+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "reload_model", "details": {"model": "gemini-2.5-flash", "provider": "gemini"}}
+{"timestamp": "2026-07-09T21:11:28.762622+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T21:12:16.919293+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-09T21:14:10.867344+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "login_success", "details": {}}
