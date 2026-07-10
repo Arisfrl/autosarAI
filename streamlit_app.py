@@ -130,6 +130,8 @@ def _clear_auth_session() -> None:
         "engine",
         "yaml_data",
         "arxml_output",
+        "arxml_output_adaptive",
+        "arxml_output_classic",
         "vector_docs",
         "keyword_docs",
         "uploaded_docs",
@@ -796,6 +798,10 @@ if "yaml_data" not in st.session_state:
     st.session_state.yaml_data = ""
 if "arxml_output" not in st.session_state:
     st.session_state.arxml_output = ""
+if "arxml_output_adaptive" not in st.session_state:
+    st.session_state.arxml_output_adaptive = ""
+if "arxml_output_classic" not in st.session_state:
+    st.session_state.arxml_output_classic = ""
 if "vector_docs" not in st.session_state:
     st.session_state.vector_docs = []
 if "keyword_docs" not in st.session_state:
@@ -1031,11 +1037,14 @@ with st.sidebar:
             st.warning("Generate YAML first.")
         else:
             try:
-                st.session_state.arxml_output = engine.compile_to_arxml(
+                outputs = engine.compile_to_arxml_pair(
                     st.session_state.yaml_data,
                     use_mapping_precheck=st.session_state.use_mapping_precheck,
                 )
-                st.success("ARXML regenerated in normalized format.")
+                st.session_state.arxml_output_adaptive = outputs.get("adaptive", "")
+                st.session_state.arxml_output_classic = outputs.get("classic", "")
+                st.session_state.arxml_output = st.session_state.arxml_output_adaptive
+                st.success("Adaptive and Classic ARXML regenerated.")
             except Exception as exc:
                 st.error(f"ARXML regeneration failed: {exc}")
 
@@ -1089,11 +1098,14 @@ with st.sidebar:
             )
 
             try:
-                st.session_state.arxml_output = engine.compile_to_arxml(
+                outputs = engine.compile_to_arxml_pair(
                     st.session_state.yaml_data,
                     use_mapping_precheck=st.session_state.use_mapping_precheck,
                 )
-                flow_steps.append("3. Compiled YAML to normalized ARXML.")
+                st.session_state.arxml_output_adaptive = outputs.get("adaptive", "")
+                st.session_state.arxml_output_classic = outputs.get("classic", "")
+                st.session_state.arxml_output = st.session_state.arxml_output_adaptive
+                flow_steps.append("3. Compiled YAML to Adaptive and Classic ARXML.")
             except Exception as exc:
                 flow_steps.append(f"3. Compile step failed: {exc}")
 
@@ -1628,10 +1640,13 @@ if st.button("Compile ARXML"):
     else:
         with st.spinner("Compiling YAML to ARXML..."):
             try:
-                st.session_state.arxml_output = engine.compile_to_arxml(
+                outputs = engine.compile_to_arxml_pair(
                     st.session_state.yaml_data,
                     use_mapping_precheck=st.session_state.use_mapping_precheck,
                 )
+                st.session_state.arxml_output_adaptive = outputs.get("adaptive", "")
+                st.session_state.arxml_output_classic = outputs.get("classic", "")
+                st.session_state.arxml_output = st.session_state.arxml_output_adaptive
                 _audit_log(
                     auth_ctx["tenant"],
                     auth_ctx["username"],
@@ -1640,10 +1655,13 @@ if st.button("Compile ARXML"):
                     {
                         "yaml_len": len(st.session_state.yaml_data or ""),
                         "use_mapping_precheck": st.session_state.use_mapping_precheck,
+                        "outputs": ["adaptive", "classic"],
                     },
                 )
             except Exception as exc:
                 st.session_state.arxml_output = ""
+                st.session_state.arxml_output_adaptive = ""
+                st.session_state.arxml_output_classic = ""
                 st.error(f"Compile failed: {exc}")
                 _audit_log(
                     auth_ctx["tenant"],
@@ -1657,9 +1675,26 @@ if st.button("Compile ARXML"):
                     },
                 )
 
-if st.session_state.arxml_output:
-    st.code(st.session_state.arxml_output, language="xml")
-    st.download_button("Download ARXML", st.session_state.arxml_output, file_name="autosar_output.arxml", mime="application/xml")
+if st.session_state.arxml_output_adaptive or st.session_state.arxml_output_classic:
+    if st.session_state.arxml_output_adaptive:
+        st.markdown("**Adaptive ARXML**")
+        st.code(st.session_state.arxml_output_adaptive, language="xml")
+        st.download_button(
+            "Download Adaptive ARXML",
+            st.session_state.arxml_output_adaptive,
+            file_name="autosar_output_adaptive.arxml",
+            mime="application/xml",
+        )
+
+    if st.session_state.arxml_output_classic:
+        st.markdown("**Classic ARXML**")
+        st.code(st.session_state.arxml_output_classic, language="xml")
+        st.download_button(
+            "Download Classic ARXML",
+            st.session_state.arxml_output_classic,
+            file_name="autosar_output_classic.arxml",
+            mime="application/xml",
+        )
 
 st.subheader("4. Safety validation")
 st.caption("Run safety assessment and review findings with score, severity counts, and actionable fixes.")

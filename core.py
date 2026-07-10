@@ -1121,6 +1121,69 @@ safety:
         return yaml.safe_dump(spec, sort_keys=False, allow_unicode=True)
 
     def compile_to_arxml(self, yaml_text: str, use_mapping_precheck: bool = True) -> str:
+        outputs = self.compile_to_arxml_pair(
+            yaml_text,
+            use_mapping_precheck=use_mapping_precheck,
+        )
+        return outputs["adaptive"]
+
+    def _build_adaptive_spec(self, data: Dict[str, object]) -> Dict[str, object]:
+        spec = copy.deepcopy(data)
+        system = spec.get("system") if isinstance(spec.get("system"), dict) else {}
+        if isinstance(system, dict):
+            name = str(system.get("name", "autosar-system")).strip() or "autosar-system"
+            if not name.upper().endswith("_ADAPTIVE"):
+                system["name"] = f"{name}_ADAPTIVE"
+            spec["system"] = system
+        return spec
+
+    def _build_classic_spec(self, data: Dict[str, object]) -> Dict[str, object]:
+        spec = copy.deepcopy(data)
+
+        system = spec.get("system") if isinstance(spec.get("system"), dict) else {}
+        if isinstance(system, dict):
+            name = str(system.get("name", "autosar-system")).strip() or "autosar-system"
+            if not name.upper().endswith("_CLASSIC"):
+                system["name"] = f"{name}_CLASSIC"
+            spec["system"] = system
+
+        services = spec.get("services") if isinstance(spec.get("services"), list) else []
+        for item in services:
+            if not isinstance(item, dict):
+                continue
+            item["protocol"] = "CAN"
+            route = str(item.get("route", "")).strip()
+            item["route"] = route or "/classic/can/bus"
+
+        signals = spec.get("signals") if isinstance(spec.get("signals"), list) else []
+        for item in signals:
+            if not isinstance(item, dict):
+                continue
+            item["format"] = "CAN"
+            source = str(item.get("source", "")).strip()
+            destination = str(item.get("destination", "")).strip()
+            source_lower = source.lower()
+            destination_lower = destination.lower()
+
+            if not source:
+                item["source"] = "ClassicCANBus"
+            if not destination:
+                item["destination"] = "ClassicCANBus"
+            if any(token in source_lower for token in ["some/ip", "someip", "ethernet", "adaptive"]):
+                item["source"] = "ClassicCANBus"
+            if any(token in destination_lower for token in ["some/ip", "someip", "ethernet", "adaptive"]):
+                item["destination"] = "ClassicCANBus"
+
+        spec["services"] = services
+        spec["signals"] = signals
+        return spec
+
+    def _render_arxml(self, spec: Dict[str, object]) -> str:
+        template = self.template_env.get_template("arxml_template.xml.j2")
+        raw_xml = template.render(spec=spec)
+        return self._format_arxml_output(raw_xml)
+
+    def compile_to_arxml_pair(self, yaml_text: str, use_mapping_precheck: bool = True) -> Dict[str, str]:
         data = self._parse_yaml_spec(yaml_text)
         data = self._normalize_spec_for_compile(data)
 
@@ -1142,9 +1205,12 @@ safety:
                     "Adjust mappings or run safety review before compiling."
                 )
 
-        template = self.template_env.get_template("arxml_template.xml.j2")
-        raw_xml = template.render(spec=data)
-        return self._format_arxml_output(raw_xml)
+        adaptive_spec = self._build_adaptive_spec(data)
+        classic_spec = self._build_classic_spec(data)
+        return {
+            "adaptive": self._render_arxml(adaptive_spec),
+            "classic": self._render_arxml(classic_spec),
+        }
 
     @staticmethod
     def _format_arxml_output(xml_text: str) -> str:

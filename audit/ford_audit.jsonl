@@ -128,3 +128,15 @@
 {"timestamp": "2026-07-09T23:27:56.518606+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "run_safety_check", "details": {"issue_count": 4, "score": 68, "summary": "Validation passed with warnings", "use_mapping_precheck": true}}
 {"timestamp": "2026-07-09T23:29:20.892067+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
 {"timestamp": "2026-07-09T23:29:24.598276+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-09T23:30:06.045926+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml_failed", "details": {"error": "ollama_model_not_installed", "model": "llama3.1", "mode": "ollama"}}
+{"timestamp": "2026-07-09T23:30:13.525030+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "reload_model", "details": {"model": "llama3.1", "provider": "ollama"}}
+{"timestamp": "2026-07-09T23:30:18.209011+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml_failed", "details": {"error": "ollama_model_not_installed", "model": "llama3.1", "mode": "ollama"}}
+{"timestamp": "2026-07-09T23:30:32.713458+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "reload_model", "details": {"model": "llama3.1:latest", "provider": "ollama"}}
+{"timestamp": "2026-07-09T23:31:27.986932+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 145, "mode": "ollama", "model": "llama3.1:latest"}}
+{"timestamp": "2026-07-09T23:32:04.356339+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1129, "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T23:32:08.115938+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "run_safety_check", "details": {"issue_count": 4, "score": 68, "summary": "Validation passed with warnings", "use_mapping_precheck": true}}
+{"timestamp": "2026-07-09T23:35:06.928584+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-10T00:23:34.637430+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "login_success", "details": {}}
+{"timestamp": "2026-07-10T00:23:56.776453+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "reload_model", "details": {"model": "llama3.1:latest", "provider": "ollama"}}
+{"timestamp": "2026-07-10T00:25:58.621526+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 145, "mode": "ollama", "model": "llama3.1:latest"}}
+{"timestamp": "2026-07-10T00:26:12.026319+00:00", "tenant": "ford", "username": "ford_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 1383, "use_mapping_precheck": true, "outputs": ["adaptive", "classic"]}}
