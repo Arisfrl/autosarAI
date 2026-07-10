@@ -773,7 +773,7 @@ components.html(
 st.markdown(hero_html, unsafe_allow_html=True)
 
 if "model_name" not in st.session_state:
-    st.session_state.model_name = "llama3.1"
+    st.session_state.model_name = "llama3.1:latest"
 if "model_provider" not in st.session_state:
     st.session_state.model_provider = "ollama"
 if "gemini_api_key" not in st.session_state:
@@ -943,7 +943,7 @@ with st.sidebar:
         fallback_model = (
             "gemini-2.5-flash"
             if st.session_state.model_provider == "gemini"
-            else "llama3.1"
+            else "llama3.1:latest"
         )
         st.session_state.model_name = model_name.strip() or fallback_model
         st.session_state.engine = _create_engine(

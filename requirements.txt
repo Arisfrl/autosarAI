@@ -7,3 +7,4 @@ pyyaml
 sentence-transformers
 pypdf
 scikit-learn
+python-pptx
