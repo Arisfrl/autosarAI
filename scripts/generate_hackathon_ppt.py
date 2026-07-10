@@ -10,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_PATH = BASE_DIR / "AUTOSAR_AI_MDE_Hackathon_Demo.pptx"
 SCREENSHOT_DIR = BASE_DIR / "screenshots"
 STREAMLIT_SCREENSHOT = SCREENSHOT_DIR / "streamlit_ui_rich.png"
+STREAMLIT_COMPILE_SCREENSHOT = SCREENSHOT_DIR / "streamlit_compile_safety.png"
 HMI_SCREENSHOT = SCREENSHOT_DIR / "hmi_cluster_ui.png"
 
 BG = RGBColor(9, 21, 35)
@@ -32,10 +33,10 @@ SLIDES = [
     {
         "title": "Problem We Are Solving",
         "bullets": [
-            "AUTOSAR architecture design is slow, artifact-heavy, and split across Classic CAN and Adaptive SOME/IP worlds.",
-            "Teams must move from informal requirements into structured models, communication mappings, and safety evidence under demo-time pressure.",
-            "Early architecture iterations often lack traceability, tenant isolation, or fast validation for ASIL-oriented design decisions.",
-            "Hackathon teams need a working pipeline that turns prompts and reference ARXML into usable artifacts, not just static documentation.",
+            "AUTOSAR design is slow, artifact-heavy, and split across Classic CAN and Adaptive SOME/IP stacks.",
+            "Teams must turn informal requirements into models, mappings, and safety evidence under time pressure.",
+            "Early iterations often lack fast validation, traceability, and reusable demo artifacts.",
+            "We need a working pipeline that converts intent and ARXML references into usable outputs, not just documents.",
         ],
         "callouts": [
             ("Pain", "Manual modeling, fragmented communication stacks, late safety feedback", DANGER),
@@ -45,10 +46,10 @@ SLIDES = [
     {
         "title": "What This Project Delivers",
         "bullets": [
-            "Generates simplified AUTOSAR YAML from natural language requests using local reference grounding.",
-            "Compiles one architecture into two outputs in the app: Adaptive ARXML and Classic ARXML.",
-            "Runs safety validation with ISO 26262-style checks for structure, ASIL completeness, mappings, and communication risks.",
-            "Supports reference ARXML upload, retrieval comparison, AI suggestions, demo HMI/telltale simulation, and tenant-scoped audit trails.",
+            "Natural language to AUTOSAR YAML using local grounded retrieval.",
+            "One-click compile to both Adaptive ARXML and Classic ARXML.",
+            "Safety validation for structure, ASIL coverage, mappings, and communication risk.",
+            "Reference ARXML upload, AI suggestions, HMI simulation, and tenant-scoped audit trails.",
         ],
         "callouts": [
             ("Artifacts", "YAML, Adaptive ARXML, Classic ARXML, safety findings", ACCENT_2),
@@ -71,10 +72,10 @@ SLIDES = [
     {
         "title": "How AI Is Helping",
         "bullets": [
-            "Retrieval-Augmented Generation grounds prompts in AUTOSAR reference notes and workflow example documents instead of relying on a generic LLM answer.",
-            "The model converts broad intent into structured architecture sections: system, ECUs, services, signals, and safety.",
-            "An AI suggestion engine proposes safety, mapping, and deployment improvements after generation.",
-            "A lightweight ML baseline flags potentially unsafe signal-to-service mappings before compile time.",
+            "RAG grounds prompts in local AUTOSAR notes and example ARXML, reducing generic LLM drift.",
+            "The model converts broad intent into structured system, ECU, service, signal, and safety sections.",
+            "AI suggestions propose safety, mapping, and deployment improvements after generation.",
+            "A lightweight ML baseline flags risky signal-to-service mappings before compile time.",
         ],
         "callouts": [
             ("LLM", "Ollama default, Gemini optional provider", ACCENT_2),
@@ -139,6 +140,11 @@ SLIDES = [
         "subtitle": "Authenticated Streamlit console and ARXML-driven HMI cluster",
     },
     {
+        "layout": "compile_safety",
+        "title": "Compile and Safety Evidence",
+        "subtitle": "Dual ARXML output and safety validation results captured from the live app",
+    },
+    {
         "title": "Why This Matters",
         "bullets": [
             "Faster concept-to-architecture turnaround for SDV teams working across Classic and Adaptive AUTOSAR stacks.",
@@ -148,6 +154,19 @@ SLIDES = [
         ],
         "callouts": [
             ("Benefit", "Speed, consistency, safety visibility, and demo-grade explainability", ACCENT),
+        ],
+    },
+    {
+        "title": "Judging Summary",
+        "bullets": [
+            "Innovation: combines local LLM generation, RAG, safety checks, ML mapping pre-check, and HMI simulation in one AUTOSAR demo flow.",
+            "Technical depth: covers YAML generation, dual ARXML compilation, tenant isolation, validation, audit logging, and UI-driven review.",
+            "Practical impact: accelerates AUTOSAR architecture iteration while exposing safety and communication issues earlier.",
+            "Demo strength: judges can see prompt input, generated artifacts, compile evidence, safety results, and HMI behavior in one session.",
+        ],
+        "callouts": [
+            ("One-line pitch", "An AI-assisted AUTOSAR copilot that turns intent into dual-stack artifacts with safety-aware feedback.", ACCENT_2),
+            ("Judge lens", "Innovation + feasibility + impact + live proof", WARN),
         ],
     },
     {
@@ -294,6 +313,30 @@ def add_image_with_frame(slide, image_path, x, y, w, h, caption):
     r.font.color.rgb = MUTED
 
 
+def add_small_callout(slide, title, body, color, x, y, w, h):
+    shape = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE, x, y, w, h)
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = RGBColor(10, 21, 34)
+    shape.line.color.rgb = color
+    shape.line.width = Pt(1.3)
+    tf = shape.text_frame
+    tf.clear()
+    tf.word_wrap = True
+    p1 = tf.paragraphs[0]
+    r1 = p1.add_run()
+    r1.text = title
+    r1.font.name = "Aptos Display"
+    r1.font.size = Pt(12)
+    r1.font.bold = True
+    r1.font.color.rgb = color
+    p2 = tf.add_paragraph()
+    r2 = p2.add_run()
+    r2.text = body
+    r2.font.name = "Aptos"
+    r2.font.size = Pt(10)
+    r2.font.color.rgb = TEXT
+
+
 def build_deck():
     prs = Presentation()
     prs.slide_width = Inches(13.333)
@@ -380,6 +423,36 @@ def build_deck():
                 Inches(5.25),
                 "ARXML-driven HMI cluster: telltale authorization, control panel, and validation feedback",
             )
+            add_small_callout(slide, "1. Prompt to YAML", "Natural-language request generates structured AUTOSAR YAML in-app.", ACCENT, Inches(0.95), Inches(5.95), Inches(2.2), Inches(0.72))
+            add_small_callout(slide, "2. HMI linkage", "Loaded ARXML authorizes telltales before the cluster can be controlled.", WARN, Inches(8.25), Inches(5.95), Inches(3.7), Inches(0.72))
+            add_footer(slide)
+            continue
+
+        if spec.get("layout") == "compile_safety":
+            add_top_bar(slide, spec["title"])
+
+            sub = slide.shapes.add_textbox(Inches(0.65), Inches(0.82), Inches(8.8), Inches(0.35))
+            tf = sub.text_frame
+            tf.clear()
+            p = tf.paragraphs[0]
+            r = p.add_run()
+            r.text = spec["subtitle"]
+            r.font.name = "Aptos"
+            r.font.size = Pt(16)
+            r.font.color.rgb = MUTED
+
+            add_image_with_frame(
+                slide,
+                STREAMLIT_COMPILE_SCREENSHOT,
+                Inches(0.65),
+                Inches(1.2),
+                Inches(9.1),
+                Inches(5.75),
+                "Live app state showing Classic ARXML output and safety status after compile/check",
+            )
+            add_small_callout(slide, "Dual output", "One compile flow now generates both Adaptive and Classic ARXML downloads.", ACCENT_2, Inches(10.0), Inches(1.55), Inches(2.65), Inches(0.95))
+            add_small_callout(slide, "Safety feedback", "Warnings surface immediately so the demo shows engineering governance, not just generation.", DANGER, Inches(10.0), Inches(2.8), Inches(2.65), Inches(1.1))
+            add_small_callout(slide, "Judge takeaway", "This is a working pipeline: model output, compile artifact, and validation evidence in one UI.", ACCENT, Inches(10.0), Inches(4.25), Inches(2.65), Inches(1.15))
             add_footer(slide)
             continue
 

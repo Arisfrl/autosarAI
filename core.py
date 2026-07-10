@@ -26,6 +26,7 @@ from pypdf import PdfReader
 BASE_DIR = Path(__file__).resolve().parent
 DEMO_BASELINE_PATH = BASE_DIR / "data" / "demo_validation_baseline.json"
 MAPPING_BASELINE_MODEL_PATH = BASE_DIR / "models" / "gnn_mapping_baseline.pkl"
+MAPPING_BASELINE_METRICS_PATH = BASE_DIR / "models" / "gnn_mapping_baseline_metrics.json"
 _EMBEDDING_FUNCTION = None
 _EMBEDDING_FUNCTION_LOCK = threading.Lock()
 
@@ -1692,6 +1693,58 @@ safety:
             self.mapping_baseline_model = None
             self.mapping_baseline_error = str(exc)
         return self.mapping_baseline_model
+
+    def retrain_mapping_baseline(
+        self,
+        train_path: Optional[Path] = None,
+        val_path: Optional[Path] = None,
+        test_path: Optional[Path] = None,
+    ) -> Dict[str, object]:
+        script_path = BASE_DIR / "scripts" / "train_mapping_baseline.py"
+        if not script_path.exists():
+            raise FileNotFoundError(f"Training script not found at {script_path}")
+
+        cmd = [sys.executable, str(script_path)]
+        if train_path is not None:
+            cmd.extend(["--train", str(train_path)])
+        if val_path is not None:
+            cmd.extend(["--val", str(val_path)])
+        if test_path is not None:
+            cmd.extend(["--test", str(test_path)])
+
+        result = subprocess.run(
+            cmd,
+            cwd=str(BASE_DIR),
+            capture_output=True,
+            text=True,
+        )
+
+        stdout_clean = _strip_ansi_and_controls(result.stdout)
+        stderr_clean = _strip_ansi_and_controls(result.stderr)
+        if result.returncode != 0:
+            detail = stderr_clean or stdout_clean or "unknown training failure"
+            raise RuntimeError(f"Mapping model retrain failed: {detail}")
+
+        # Force reload so new predictions are used immediately in this session.
+        self.mapping_baseline_model = None
+        self.mapping_baseline_error = None
+        self.last_mapping_assessment = []
+        self._load_mapping_baseline_model()
+
+        metrics: Dict[str, object] = {}
+        if MAPPING_BASELINE_METRICS_PATH.exists():
+            try:
+                metrics = json.loads(MAPPING_BASELINE_METRICS_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                metrics = {}
+
+        return {
+            "model_path": str(MAPPING_BASELINE_MODEL_PATH),
+            "metrics_path": str(MAPPING_BASELINE_METRICS_PATH),
+            "metrics": metrics,
+            "stdout": stdout_clean,
+            "stderr": stderr_clean,
+        }
 
     def _build_mapping_feature_rows(self, spec: Dict[str, object]) -> List[Dict[str, object]]:
         services = spec.get("services", []) if isinstance(spec.get("services", []), list) else []

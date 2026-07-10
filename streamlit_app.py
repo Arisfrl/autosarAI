@@ -979,6 +979,34 @@ with st.sidebar:
         value=st.session_state.use_mapping_precheck,
         help="When enabled, compile/safety includes baseline ML checks for signal-to-service mappings.",
     )
+    if st.button("Retrain ML mapping model"):
+        with st.spinner("Retraining mapping baseline model..."):
+            try:
+                retrain_result = engine.retrain_mapping_baseline()
+                metrics = retrain_result.get("metrics")
+                st.success("ML mapping model retrained and reloaded.")
+                if metrics:
+                    st.caption("Latest baseline metrics")
+                    st.json(metrics)
+                _audit_log(
+                    auth_ctx["tenant"],
+                    auth_ctx["username"],
+                    auth_ctx["role"],
+                    "retrain_mapping_model",
+                    {
+                        "model_path": retrain_result.get("model_path", ""),
+                        "metrics_path": retrain_result.get("metrics_path", ""),
+                    },
+                )
+            except Exception as exc:
+                st.error(f"Retrain failed: {exc}")
+                _audit_log(
+                    auth_ctx["tenant"],
+                    auth_ctx["username"],
+                    auth_ctx["role"],
+                    "retrain_mapping_model_failed",
+                    {"error": str(exc)},
+                )
     if st.button("Warm up retrieval model now"):
         with st.spinner("Warming retrieval model..."):
             ok = engine.warm_up_vector_store()

@@ -63,3 +63,7 @@
 {"timestamp": "2026-07-10T01:05:45.732955+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "session_restored", "details": {}}
 {"timestamp": "2026-07-10T01:06:27.796403+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama", "model": "llama3.1:latest"}}
 {"timestamp": "2026-07-10T01:06:28.808265+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 726, "use_mapping_precheck": true, "outputs": ["adaptive", "classic"]}}
+{"timestamp": "2026-07-10T01:08:05.599745+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "session_restored", "details": {}}
+{"timestamp": "2026-07-10T01:08:40.913825+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "generate_yaml", "details": {"use_vector": true, "prompt_len": 92, "mode": "ollama", "model": "llama3.1:latest"}}
+{"timestamp": "2026-07-10T01:08:41.915864+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "compile_arxml", "details": {"yaml_len": 578, "use_mapping_precheck": true, "outputs": ["adaptive", "classic"]}}
+{"timestamp": "2026-07-10T01:08:43.001202+00:00", "tenant": "bmw", "username": "bmw_admin", "role": "admin", "action": "run_safety_check", "details": {"issue_count": 4, "score": 68, "summary": "Validation passed with warnings", "use_mapping_precheck": true}}
